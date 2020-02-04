@@ -10,6 +10,10 @@
 body {
 	margin: 0.5em;
 	padding: 0.5em;
+    background: #B8860B;
+}
+span{
+    padding-left: 0.2em;
 }
 
 #head{
@@ -20,13 +24,12 @@ body {
     padding: 1em; 
     left: 0;
     right: 0;
-    background: white;
+    background: #DAA520;
     font-size: 1.3em;
 }
 #import{
     float: left;
     width:50%;
-    background: white;
 }
 #state{
     right: 2em;
@@ -80,12 +83,17 @@ ul li button{
     font-size: 1em;
 
 }
-button{
+#jump{
+    margin: 0.5em;
+    float: left;
+    font-size: 1em;
+}
+input,button{
     border-style: solid;
     border-color: gray;
     margin: 0.1em;
-    font-size: 0.8em;
-
+    font-size: 1em;
+    float: left;
 }
 #bottom{
     position: fixed;
@@ -95,67 +103,17 @@ button{
     left: 0;
     right: 0;
     overflow: hidden;
-    background: white;
+    background: #DAA520;
     font-size: 1.5em;
 }
-.text-popup {
-    animation: textPopup 0.7s;
-    color: red;
-    user-select: none;
-    white-space: nowrap;
-    position: absolute;
-    z-index: 99;
-    font-size: 20px;
-}
-@keyframes textPopup {
-    0%, 100% {
-        opacity: 0;
-    }
-    5% {
-        opacity: 1;
-    }
 </style>
 <script>
-var fnTextPopup = function (arr, options) {
-    // arr参数是必须的
-    if (!arr || !arr.length) {
-        return;    
-    }
-    // 主逻辑
-    var index = 0;
-    document.documentElement.addEventListener('click', function (event) {
-        var x = event.pageX, y = event.pageY;
-        var item = event.target;
-        if(item.tagName!="SPAN")return;
-		var obj=document.elementFromPoint(event.clientX,event.clientY);
-        var eleText = document.createElement('span');
-        eleText.className = 'text-popup';
-        this.appendChild(eleText);
-        if (arr[index]) {
-            eleText.innerHTML = arr[index];
-        } else {
-            index = 0;
-            eleText.innerHTML = arr[0];
-        }
-        // 动画结束后删除自己
-        eleText.addEventListener('animationend', function () {
-            eleText.parentNode.removeChild(eleText);
-        });
-        // 位置
-        eleText.style.left = (x - eleText.clientWidth / 2) + 'px';
-        eleText.style.top = (y - eleText.clientHeight) + 'px';
-        // index递增
-        index++;
-    });    
-};
-
-fnTextPopup(['|']);
 </script>
 <body>
     <div id="head">
             <h1>小Ann标注工具</h1>
             <div id="import">
-            	<a>导入标注工程文件</a>
+            	<a style="float: left;">导入标注工程文件</a>
                 <input type="file" id="files" style="font-size: 0.8em" onchange="fileImport();">
             </div>
             <div id="state">
@@ -168,6 +126,11 @@ fnTextPopup(['|']);
         </div>  
         <div id="info_list">
             <ul>
+                <li>
+                    <select id="jump">
+                    </select> 
+                    <input type='button' value='跳转' onClick="jump()"/>
+                </li>
                 <li>
                     <p id="annoted_spo" style="background:#A9A9A9">已标注：0 对三元组</p>
                 </li>
@@ -205,32 +168,40 @@ fnTextPopup(['|']);
 <script type="text/javascript">
     var txts;
 	var imported_flag=0;
+
     var current_sample_index=-1;
     var current_char_index=-1;
+    var end_char_index=-1;
     var total_char_index=-1;
-    var length_list=[];
+    var spo_relative_start_index=-1;
+
     var total=-1;
-    var samples_current=[];
+    var all_samples_loaded=[];
+    var all_spos_loaded=[];
     var labels_current=[];
-    var spo_lists=[];
     var spo=[];
     var obj_mousedown;
     var obj_mouseup;
     var filename="";
     var contents="";
+
     var count_new_entity=-1;
     var count_new_relation=-1;
     var count_cancled_point=-1;
+    var count_spo_lists=-1;
 
+function jump(){
+    obj = document.getElementById("jump");
+    current_sample_index=parseInt(obj.value);
+    refresh();
+}
 function next(samples){
     current_sample_index+=1;
     if(current_sample_index>total){
         current_sample_index=total;
         return;
     }
-    var progress_obj=document.getElementById("progress");
-    progress_obj.innerHTML="当前进度："+current_sample_index+"/"+total;
-    text2obj_color(samples_current[current_sample_index],labels_current[current_sample_index]);
+    refresh();
 }
 function last(samples){
     current_sample_index-=1;
@@ -238,29 +209,78 @@ function last(samples){
         current_sample_index=0;
         return;
     }
-    var progress_obj=document.getElementById("progress");
-    progress_obj.innerHTML="当前进度："+current_sample_index+"/"+total;
-    text2obj_color(samples_current[current_sample_index],labels_current[current_sample_index]);
+    refresh();
 }
-function text2obj_color(text,label){
+function start_end_index(index,label){
+    var start_index=-1;
+    var end_index=-1;
+    if(index<0||index>label.length)return[-1,-1];
+    if(label[index][0]=="O")return [index,-1];
+    if(label[index][0]=="B"){//刚好index是实体（关系）的起点索引，只需寻找结尾索引
+        var start_index=index;
+        for(var i=index+1;i<label.length;i++)if(label[i][0]!="I")break;
+        var end_index=i-1;
+        return [start_index,end_index];
+    }else{//index位于中间，先寻左边的起点索引，再寻找右边的结尾索引
+            for(var i=index-1;i>0;i--)if(label[i][0]!="I")break;
+            if(i==0||label[i][0]!="B"){
+                alert(total_char_index+"处数据存在问题，找不到标记起始");
+                return [-1,-1];
+            }
+            start_index=i;
+            for(var i=index+1;i<label.length;i++){
+                if(label[i][0]!="I")break;
+            }
+            end_index=i-1;
+            return [start_index,end_index];
+        }
+}
+function text2obj_color(text,label,spos){
     var testobj=document.getElementById("CurrentContent");
     testobj.innerHTML="";
     for(var c in text){
         var char = document.createElement('span');
         char.innerHTML = text[c];
+
+        //实体关系可视化
         if(label[c].length>2){
-            if(label[c][0]=="B"){
-                char.style.marginLeft="0.5em";
-            }
             if(label[c][2]=="实") char.style.backgroundColor="#DAA520";
             else if(label[c][2]=="关") char.style.backgroundColor="#9ACD32";
+            if(label[c][0]=="B"&&c>0&&label[c-1][0]=="I"){
+                var a_object=document.createElement("a");
+                a_object.innerHTML="~";
+                a_object.style.fontSize="1px";
+                a_object.style.backgroundColor="#7B68EE";
+                testobj.appendChild(a_object);
+            }
         }
         if(text[c]=="\n"){
-            char.style.backgroundColor="#800080";
-            var br = document.createElement('br');
+            char.style.backgroundColor="#800080";//紫色，突出换行符
             testobj.appendChild(char);
-            if(c!=0) testobj.appendChild(br);//这一批样本首字符为换行符，统计但不显示出来。
-        }else  testobj.appendChild(char);
+            var br = document.createElement('br');//显示换行
+            
+            if(c!=0) testobj.appendChild(br);//首字符为换行的不显示
+        }else  testobj.appendChild(char);//这一批样本首字符为换行符，统计但不显示
+    }
+    var testobj=document.getElementById("CurrentContent");
+    var lists = Array.from(testobj.querySelectorAll('span'));
+    //三元组可视化
+    var tag=["S","P","O"];
+    var colors=["#A52A2A","#008000","#4169E1"];
+    if(spos.length>1){
+        var this_page_index=spos[0];
+        for(var i=1;i<spos.length;i++){
+            var spo=spos[i].split(">");
+            for(var j in spo){
+                var relative_index=parseInt(spo[j])-this_page_index;
+                var a_object=document.createElement("a");
+                a_object.style.marginLeft="0.2em";
+                a_object.innerHTML=tag[j]+i;
+                a_object.style.fontSize="0.2em";
+                a_object.style.backgroundColor=colors[j];
+                testobj.insertBefore(a_object,lists[relative_index]);
+            }
+        }
     }
 }
 function text2obj(text){
@@ -274,6 +294,32 @@ function text2obj(text){
 		testobj.appendChild(char);
 	}
 }
+function render_rectangle(start_end){
+    if(start_end[0]==-1||start_end[1]==-1)return;
+    var testobj=document.getElementById("CurrentContent");
+    var lists = Array.from(testobj.querySelectorAll('span'));
+    var color="#800000";
+    var start_obj=lists[start_end[0]];
+    var end_obj=lists[start_end[1]];
+    start_obj.style.borderLeft="solid";
+    start_obj.style.borderTop="solid";
+    start_obj.style.borderBottom="solid";
+    // start_obj.style.fontSize="1.1em";
+    start_obj.style.borderColor=color;
+    end_obj.style.borderRight="solid";
+    end_obj.style.borderTop="solid";
+    end_obj.style.borderBottom="solid";
+    // end_obj.style.fontSize="1.1em";
+    end_obj.style.borderColor=color;
+    for(var i=start_end[0]+1;i<start_end[1];i++){
+        var span_obj=lists[i];
+        span_obj.style.borderTop="solid";
+        span_obj.style.borderBottom="solid";
+        span_obj.style.borderColor=color;
+        // span_obj.style.fontSize="1.1em";
+
+    }
+}
 function save(){
     spo=[];
     if(imported_flag==0)return;
@@ -281,18 +327,21 @@ function save(){
     var labels_result=[];
     var tokens_result=[];
     var spo_result=[];
-    for(var i=0;i<contents.length;i++)spo_result.push("X");
+    for(var i=0;i<contents.length;i++)spo_result.push("X");//初始化三元组域
     for (var i = 0; i <labels_current.length; i++) {
         for (var j = 0; j<labels_current[i].length; j++) {
             labels_result.push(labels_current[i][j]); 
-            tokens_result.push(samples_current[i][j]=="\n"? "_换行符_":samples_current[i][j]);
+            tokens_result.push(all_samples_loaded[i][j]=="\n"? "_换行符_":all_samples_loaded[i][j]);
         }
         
     }
-    for(var i in spo_lists){
-        console.log(spo_lists[i]);
-        var spo_tmp=spo_lists[i].split(">");
-        spo_result[parseInt(spo_tmp[0])]+=";"+spo_tmp.join(">");
+    for(var i in all_spos_loaded){
+        if(all_spos_loaded[i].length==1)continue;
+        for(var j=1;j<all_spos_loaded[i].length;j++){
+            var spo_tmp=all_spos_loaded[i][j].split(">");
+            spo_result[parseInt(spo_tmp[0])]+=";"+spo_tmp.join(">");    
+        }
+        
     }
     for(var i in contents){
         if(spo_result[i][1]==";"){
@@ -302,15 +351,17 @@ function save(){
     }
     
     var blob = new Blob([results], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, filename+".lann");
+    saveAs(blob, filename+"#"+current_sample_index+"#"+".lann");
 }
 function refresh(){
     spo=[];
+    var progress_obj=document.getElementById("progress");
+    progress_obj.innerHTML="当前进度："+current_sample_index+"/"+total;
     var indicator_obj=document.getElementById("indicator");
     indicator_obj.style.backgroundColor="gray";
-    text2obj_color(samples_current[current_sample_index],labels_current[current_sample_index]);
+    text2obj_color(all_samples_loaded[current_sample_index],labels_current[current_sample_index],all_spos_loaded[current_sample_index]);
     var annoted_spo_obj=document.getElementById("annoted_spo");
-    annoted_spo_obj.innerHTML="已标注："+spo_lists.length+" 对三元组";
+    annoted_spo_obj.innerHTML="已标注："+count_spo_lists+" 对三元组";
     var annoted_ent_obj=document.getElementById("annoted_entity");
     annoted_ent_obj.innerHTML="已标注："+count_new_entity+" 个新实体";
     var annoted_rel_obj=document.getElementById("annoted_relation");
@@ -320,37 +371,88 @@ function refresh(){
 }
 function add_entity(){
     var txtselected=window.getSelection().toString();
+    var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
+
     if(txtselected!=""){
+
+        if(all_samples_loaded[current_sample_index][current_char_index]!=txtselected[0]){
+            // console.log("开头点击偏了！");
+            current_char_index-=1;
+        }
+        if(end_char_index!=-1&&all_samples_loaded[current_sample_index][end_char_index]!=txtselected[txtselected.length-1]){
+            // console.log("结尾点击偏了！");
+            end_char_index-=1;
+        }
         labels_current[current_sample_index][current_char_index]='B_实体';
-        for (var j = current_char_index+1; j<txtselected.length+current_char_index; j++) {
+        end_char_index=Math.max(txtselected.length+current_char_index-1,end_char_index);
+        for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_实体';
+        }
+        for(var j = end_char_index+1;j<labels_current[current_sample_index].length;j++){//选中修改后，处理之前标记的结果
+            if(labels_current[current_sample_index][j][0]!="I")break
+                labels_current[current_sample_index][j]="O";
         }
         count_new_entity+=1;
         refresh();
+    }else if(start_end[0]!=-1){//选中后改成实体
+            labels_current[current_sample_index][start_end[0]]='B_实体';
+            for (var j = start_end[0]+1; j<=start_end[1]; j++) {
+                labels_current[current_sample_index][j]='I_实体';
+        }
     }
+    refresh();
 }
 function add_relation(){
     var txtselected=window.getSelection().toString();
+    var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
+
     if(txtselected!=""){
+        if(all_samples_loaded[current_sample_index][current_char_index]!=txtselected[0]){
+            // console.log("开头点击偏了！");
+            current_char_index-=1;
+        }
+        if(end_char_index!=-1&&all_samples_loaded[current_sample_index][end_char_index]!=txtselected[txtselected.length-1]){
+            // console.log("结尾点击偏了！");
+            end_char_index-=1;
+        }
         labels_current[current_sample_index][current_char_index]='B_关系';
-        for (var j = current_char_index+1; j<txtselected.length+current_char_index; j++) {
+        // for (var j = current_char_index+1; j<txtselected.length+current_char_index; j++) {
+        //若使用txtselected.length的方法，遇见双空格的情况时，length长度不正确
+        end_char_index=Math.max(txtselected.length+current_char_index-1,end_char_index);
+        for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_关系';
+        }
+        for(var j = end_char_index+1;j<labels_current[current_sample_index].length;j++){//选中修改后，处理之前标记的结果
+            if(labels_current[current_sample_index][j][0]!="I")break
+                labels_current[current_sample_index][j]="O";
         }
         count_new_relation+=1;
         refresh();
+    }else if(start_end[0]!=-1){//选中后改成关系
+            labels_current[current_sample_index][start_end[0]]='B_关系';
+            for (var j = start_end[0]+1; j<=start_end[1]; j++) {
+                labels_current[current_sample_index][j]='I_关系';
+        }
     }
+    refresh();
 }
 function cancle(){
     var txtselected=window.getSelection().toString();
+    var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
     if(txtselected!=""){
-        for (var j = current_char_index; j<txtselected.length+current_char_index; j++) {
+        labels_current[current_sample_index][current_char_index]='O';
+        for (var j = current_char_index+1; j<labels_current[current_sample_index].length; j++) {
+            if(labels_current[current_sample_index][j][0]!="I"&&j>=(end_char_index)) break;//一直改变标签直到末尾
             labels_current[current_sample_index][j]='O';
         }
-            var cancle_poin_obj=document.getElementById("cancle_point");
-            cancle_poin_obj.style.innerHTML="gray";
+        var cancle_poin_obj=document.getElementById("cancle_point");
+        cancle_poin_obj.style.innerHTML="gray";
         count_cancled_point+=1;
+    }else if(start_end[0]!=-1){//选中后取消
+        for (var j = start_end[0]; j<=start_end[1]; j++) {
+            labels_current[current_sample_index][j]='O';
+        }
     }
-
     refresh();
 }
 document.documentElement.addEventListener('mousedown', function (event) {
@@ -365,10 +467,13 @@ document.documentElement.addEventListener('click', function (event) {
         var testobj=document.getElementById("CurrentContent");
         var lists = Array.from(testobj.querySelectorAll('span'));
         current_char_index=lists.indexOf(item);
+
 	if(item.tagName=="SPAN"){//处理鼠标单击的情况
         var selected_obj=document.getElementById("selected");
-        total_char_index_cal()
-        selected_obj.innerHTML=item.innerHTML+" : "+total_char_index+" : "+labels_current[current_sample_index][current_char_index];
+        var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
+        total_char_index=total_char_index_cal(start_end[0]);
+        render_rectangle(start_end);
+        selected_obj.innerHTML=item.innerHTML+" : "+current_char_index+" : "+total_char_index+" : "+labels_current[current_sample_index][current_char_index];
         if(spo.indexOf(total_char_index)!=-1){//重复点击的情况
             spo=[];
             var indicator_obj=document.getElementById("indicator");
@@ -379,8 +484,10 @@ document.documentElement.addEventListener('click', function (event) {
         var indicator_obj=document.getElementById("indicator");
         indicator_obj.style.backgroundColor="pink";
         if(spo.length==3){
-            if(spo_lists.indexOf(spo.join(">"))==-1){//新的三元组
-                spo_lists.push(spo.join(">"));
+            if(all_spos_loaded[current_sample_index].indexOf(spo.join(">"))==-1){//新的三元组
+                console.log(all_spos_loaded[current_sample_index]);
+                all_spos_loaded[current_sample_index].push(spo.join(">"));
+                count_spo_lists+=1;
                 spo=[];
             }
             var indicator_obj=document.getElementById("indicator");
@@ -390,25 +497,29 @@ document.documentElement.addEventListener('click', function (event) {
 	}else if(window.getSelection().toString()!="" && $(item).attr("id")=="CurrentContent"){////处理文字选中的情况
 		var txt=window.getSelection().toString();
         current_char_index=Math.min(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
+        end_char_index= Math.max(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
         if(current_char_index==-1){
             window.getSelection().removeAllRanges();
-
             return;
         }
         total_char_index_cal();
         var selected_obj=document.getElementById("selected");
         selected_obj.innerHTML=txt+" : "+total_char_index;
-	}
-})
-function total_char_index_cal(){
-    total_char_index=0
-    for(var i=0;i<current_sample_index;i++){
-        total_char_index+=length_list[i]
+	}else{
+        spo=[];//点击空白处，清除已有的spo
+        var indicator_obj=document.getElementById("indicator");
+        indicator_obj.style.backgroundColor="gray";
+        for(var i in lists)lists[i].style.border="None";
     }
-    total_char_index+=current_char_index;
+})
+function total_char_index_cal(current_index){
+    return current_index+all_spos_loaded[current_sample_index][0];
+}
+function clean_all(){
+
 }
 function columnlize(contents){
-    console.log("columnlize!");
+    // console.log("columnlize!");
     var contents_columnlized=[];
     for(var i in contents) contents_columnlized.push(contents[i]=="\n"? "_换行符_":contents[i]);
     return contents_columnlized.join("\n");
@@ -420,8 +531,7 @@ $("#fileImport").click(function () {
             //获取读取我文件的File对象
             var selectedFile = document.getElementById('files').files[0];
             imported_flag=0;
-            spo_lists=[];
-            if(selectedFile.name==undefined)return;
+            if(selectedFile==undefined)return;
             var name = selectedFile.name;//读取选中文件的文件名
             var size = selectedFile.size;//读取选中文件的大小
             filename=name[name.length-1]=="t"? name:name.slice(0,name.length-5);
@@ -437,18 +547,26 @@ $("#fileImport").click(function () {
                 var label_tmp=[];
                 var spo_tmp=[];
                 var spo_dic_tmp=[];
+                var spo_lists_per_page=[0];
+                count_spo_lists=0;
                 imported_flag=1;
+                all_spos_loaded=[];
                 contents=txts.split("\n");
                 if(contents[0].indexOf("\t")==-1)contents=columnlize(txts).split("\n");
                 for(i in contents){
                 	c_l=contents[i].split("\t");
+
                     if(c_l.length>=3){//包含三元组空间，读取进来
                         spo_read=c_l[2];
                         if(spo_read[0]!="X"){                      
-                            var spos=spo_read.split(";");
-                            for(var i in spos)spo_lists.push(spos[i]);
-                            } 
-                    }
+                            var spos=spo_read.split(";"); 
+                            for(var k in spos){
+                                spo_lists_per_page.push(spos[k]);
+                                count_spo_lists+=1;
+                                }
+                            }
+                        }
+
                     c=c_l[0];
                     if(c_l.length==1)l="O";//原始文本，无标注
                     else l=c_l[1];
@@ -459,7 +577,8 @@ $("#fileImport").click(function () {
                 		tmp+=c;
                         label_tmp.push(l);
                 		samples.push(tmp);
-                        length_list.push(tmp.length);
+                        all_spos_loaded.push(spo_lists_per_page);
+                        spo_lists_per_page=[parseInt(i)+1];
                         labels.push(label_tmp);
                         label_tmp=[];
                 		tmp="";
@@ -473,15 +592,33 @@ $("#fileImport").click(function () {
                 if(samples.indexOf(tmp)==-1&&tmp!=""&&tmp!="\n"){//追加剩下的，同时排除空和只有一个换行符的情况。
                     samples.push(tmp);
                     labels.push(label_tmp);
+                    all_spos_loaded.push(spo_lists_per_page);
                 }
-                current_sample_index=0;    
+                current_sample_index=-1;
+                if(filename.indexOf("#")!=-1){//尝试从文件名中读取上次标注页码
+                    page_saved=filename.split("#");
+                    if(page_saved.length==3){
+                        current_sample_index=parseInt(page_saved[1]);
+                        filename=page_saved[0];
+                        }
+                    }
+                if(current_sample_index==-1){
+                    current_sample_index=0;//初始页码    
+                    filename+=".";
+                }
+                
                 total=samples.length-1;
                 count_new_entity=0;
                 count_new_relation=0;
                 count_cancled_point=0;
-                var progress_obj=document.getElementById("progress");
-                progress_obj.innerHTML="当前进度："+current_sample_index+"/"+total;
-                samples_current=samples;
+                var jump_option_object=document.getElementById("jump");
+                for(var i=0;i<samples.length;i++){
+                    var option_obj=document.createElement("option");
+                    option_obj.value=i;
+                    option_obj.innerHTML=i;
+                    jump_option_object.appendChild(option_obj);
+                }
+                all_samples_loaded=samples;
                 labels_current=labels;
                 refresh();
             }
