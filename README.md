@@ -1,7 +1,7 @@
 # LAnn标注工具
 
 ## LAnn简介
-![演示视频](https://freeshman.github.io/LAnn/LittleAnn.html)
+![演示视频](https://github.com/Freeshman/LAnn/blob/master/example.gif)
 LAnn（Little Annotator）是一个可以于命名实体、关系和三元组标注的纯前段工具。具有使用简单的特点，采用网页的形式，使用浏览器便可运行。标注过程、结果直观，易后处理。基本不用配置，快速上手。[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 
 ## LAnn读取文件
