@@ -73,13 +73,13 @@ ul li p{
     font-size: 1em;
     position: relative;
     float: left;
-    margin: 0.5em;
+    margin: 0.2em;
 }
 ul li button{
     border-style: solid;
     border-color: gray;
     width: 40%;
-    margin: 0.5em;
+    margin: 0.2em;
     font-size: 1em;
 
 }
@@ -240,19 +240,13 @@ function text2obj_color(text,label,spos){
     testobj.innerHTML="";
     for(var c in text){
         var char = document.createElement('span');
-        char.innerHTML = text[c];
+        char.innerHTML = text[c]==" "?"&nbsp;":text[c];
 
         //实体关系可视化
         if(label[c].length>2){
             if(label[c][2]=="实") char.style.backgroundColor="#DAA520";
             else if(label[c][2]=="关") char.style.backgroundColor="#9ACD32";
-            if(label[c][0]=="B"&&c>0&&label[c-1][0]=="I"){
-                var a_object=document.createElement("a");
-                a_object.innerHTML="~";
-                a_object.style.fontSize="1px";
-                a_object.style.backgroundColor="#7B68EE";
-                testobj.appendChild(a_object);
-            }
+            if(label[c][0]=="B") char.style.marginLeft="0.2em";
         }
         if(text[c]=="\n"){
             char.style.backgroundColor="#800080";//紫色，突出换行符
@@ -265,7 +259,7 @@ function text2obj_color(text,label,spos){
     var testobj=document.getElementById("CurrentContent");
     var lists = Array.from(testobj.querySelectorAll('span'));
     //三元组可视化
-    var tag=["S","P","O"];
+    // var tag=["S","P","O"];
     var colors=["#A52A2A","#008000","#4169E1"];
     if(spos.length>1){
         var this_page_index=spos[0];
@@ -275,7 +269,7 @@ function text2obj_color(text,label,spos){
                 var relative_index=parseInt(spo[j])-this_page_index;
                 var a_object=document.createElement("a");
                 a_object.style.marginLeft="0.2em";
-                a_object.innerHTML=tag[j]+i;
+                a_object.innerHTML=i;
                 a_object.style.fontSize="0.2em";
                 a_object.style.backgroundColor=colors[j];
                 testobj.insertBefore(a_object,lists[relative_index]);
@@ -372,19 +366,34 @@ function refresh(){
 function add_entity(){
     var txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
-
-    if(txtselected!=""){
-
-        if(all_samples_loaded[current_sample_index][current_char_index]!=txtselected[0]){
-            // console.log("开头点击偏了！");
-            current_char_index-=1;
+    console.log(txtselected);
+        if(txtselected!=""){
+        var char=all_samples_loaded[current_sample_index][current_char_index];
+        if(char!=txtselected[0]){
+            
+            console.log(txtselected[0]);
+            console.log(all_samples_loaded[current_sample_index][current_char_index]);
+            console.log("开头点击偏了！");
+            console.log("current_char_index:"+current_char_index);
+            current_char_index-=txtselected.indexOf(char);
+            console.log(current_char_index);
         }
-        if(end_char_index!=-1&&all_samples_loaded[current_sample_index][end_char_index]!=txtselected[txtselected.length-1]){
-            // console.log("结尾点击偏了！");
-            end_char_index-=1;
+        var end_char=all_samples_loaded[current_sample_index][end_char_index];
+        if(end_char_index!=-1&&end_char!=txtselected[txtselected.length-1]){
+            console.log(all_samples_loaded[current_sample_index][end_char_index]);
+            console.log(txtselected[txtselected.length-1]);
+            console.log("结尾点击偏了！");
+            console.log("end_char_index:"+end_char_index);
+            end_char_index+=(txtselected.length-txtselected.indexOf(end_char));
+            console.log(end_char_index);
         }
+
         labels_current[current_sample_index][current_char_index]='B_实体';
-        end_char_index=Math.max(txtselected.length+current_char_index-1,end_char_index);
+        console.log("txtselected.length:"+txtselected.length);
+
+        end_char_index=Math.max(txtselected.length+current_char_index-1,-1);
+        console.log("final:"+current_char_index+";"+end_char_index);
+        if(current_char_index<=0||end_char_index<=0)return;
         for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_实体';
         }
@@ -405,20 +414,35 @@ function add_entity(){
 function add_relation(){
     var txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
-
+    console.log(txtselected);
     if(txtselected!=""){
-        if(all_samples_loaded[current_sample_index][current_char_index]!=txtselected[0]){
-            // console.log("开头点击偏了！");
-            current_char_index-=1;
+        var char=all_samples_loaded[current_sample_index][current_char_index];
+        if(char!=txtselected[0]){
+            
+            console.log(txtselected[0]);
+            console.log(all_samples_loaded[current_sample_index][current_char_index]);
+            console.log("开头点击偏了！");
+            console.log("current_char_index:"+current_char_index);
+            current_char_index-=txtselected.indexOf(char);
+            console.log(current_char_index);
         }
-        if(end_char_index!=-1&&all_samples_loaded[current_sample_index][end_char_index]!=txtselected[txtselected.length-1]){
-            // console.log("结尾点击偏了！");
-            end_char_index-=1;
+        var end_char=all_samples_loaded[current_sample_index][end_char_index];
+        if(end_char_index!=-1&&end_char!=txtselected[txtselected.length-1]){
+            console.log(all_samples_loaded[current_sample_index][end_char_index]);
+            console.log(txtselected[txtselected.length-1]);
+            console.log("结尾点击偏了！");
+            console.log("end_char_index:"+end_char_index);
+            end_char_index+=(txtselected.length-txtselected.indexOf(end_char));
+            console.log(end_char_index);
         }
+        console.log("txtselected.length:"+txtselected.length);
+
         labels_current[current_sample_index][current_char_index]='B_关系';
         // for (var j = current_char_index+1; j<txtselected.length+current_char_index; j++) {
         //若使用txtselected.length的方法，遇见双空格的情况时，length长度不正确
-        end_char_index=Math.max(txtselected.length+current_char_index-1,end_char_index);
+        end_char_index=Math.max(txtselected.length+current_char_index-1,-1);
+        console.log("final:"+current_char_index+";"+end_char_index);
+        if(current_char_index<=0||end_char_index<=0)return;
         for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_关系';
         }
@@ -456,10 +480,10 @@ function cancle(){
     refresh();
 }
 document.documentElement.addEventListener('mousedown', function (event) {
-    obj_mousedown = event.target;
+    obj_mousedown = event.target.tagName=="SPAN"?event.target:obj_mousedown;
 })
 document.documentElement.addEventListener('mouseup', function (event) {
-    obj_mouseup = event.target;
+    obj_mouseup = event.target.tagName=="SPAN"?event.target:obj_mouseup;
 })
 document.documentElement.addEventListener('click', function (event) {
 	var item = event.target;
@@ -474,10 +498,11 @@ document.documentElement.addEventListener('click', function (event) {
         total_char_index=total_char_index_cal(start_end[0]);
         render_rectangle(start_end);
         selected_obj.innerHTML=item.innerHTML+" : "+current_char_index+" : "+total_char_index+" : "+labels_current[current_sample_index][current_char_index];
-        if(spo.indexOf(total_char_index)!=-1){//重复点击的情况
+        if(spo.indexOf(total_char_index)!=-1||labels_current[current_sample_index][start_end[0]][0]!="B"){//重复点击和点错的情况
             spo=[];
             var indicator_obj=document.getElementById("indicator");
             indicator_obj.style.backgroundColor="gray";
+            for(var i in lists)lists[i].style.border="None";
             return;
         }
         spo.push(total_char_index);
@@ -492,12 +517,16 @@ document.documentElement.addEventListener('click', function (event) {
             }
             var indicator_obj=document.getElementById("indicator");
             indicator_obj.style.backgroundColor="gray";
+            for(var i in lists)lists[i].style.border="None";
             refresh();
         }
 	}else if(window.getSelection().toString()!="" && $(item).attr("id")=="CurrentContent"){////处理文字选中的情况
 		var txt=window.getSelection().toString();
         current_char_index=Math.min(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
         end_char_index= Math.max(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
+        console.log('Calculate end_char_index');
+        console.log(lists.indexOf(obj_mousedown));
+        console.log(lists.indexOf(obj_mouseup));
         if(current_char_index==-1){
             window.getSelection().removeAllRanges();
             return;
