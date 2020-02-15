@@ -10,10 +10,11 @@
 body {
 	margin: 0.5em;
 	padding: 0.5em;
-    background: #B8860B;
+    background: #4a4948;
 }
 span{
     padding-left: 0.2em;
+    color:#DAA520;
 }
 
 #head{
@@ -21,7 +22,7 @@ span{
     position: fixed;
     top:0em;
     margin: 0em; 
-    padding: 1em; 
+    padding: 1em 1em 2px 1em; 
     left: 0;
     right: 0;
     background: #DAA520;
@@ -43,10 +44,10 @@ span{
 }
 
 #CurrentContent{
-    width: 80%;
+    width: 86%;
 	font-size: 1.5em;
-    margin-top: 8em;  
-    margin-bottom: 8em;  
+    margin-top: 5em;  
+    margin-bottom: 5em;  
     float: left;
     position: relative;
     z-index: -999;
@@ -93,25 +94,24 @@ input,button{
     border-color: gray;
     margin: 0.1em;
     font-size: 1em;
-    float: left;
 }
 #bottom{
     position: fixed;
     bottom: 0;
-    margin: 0em;  
-    padding: 1em;
+    margin: 0;  
+    padding: 2px;
     left: 0;
     right: 0;
     overflow: hidden;
     background: #DAA520;
-    font-size: 1.5em;
+    font-size: 1.2em;
 }
 </style>
 <script>
 </script>
 <body>
     <div id="head">
-            <h1>小Ann标注工具</h1>
+            <h1 style="margin: 1px">小Ann标注工具</h1>
             <div id="import">
             	<a style="float: left;">导入标注工程文件</a>
                 <input type="file" id="files" style="font-size: 0.8em" onchange="fileImport();">
@@ -144,14 +144,14 @@ input,button{
                     <p id="cancle_point" style="background:#A9A9A9">已取消：0 个标注点</p>
                 </li>
                 <li>
-                    <button style="background:#DAA520;float: left" onclick="add_entity()">实体</button> 
-                    <button style="background:#9ACD32;float: left" onclick="add_relation()">关系</button> 
+                    <button style="background:#4682B4;float: left" onclick="add_entity()">实体</button> 
+                    <button style="background:#228B22;float: left" onclick="add_relation()">关系</button> 
                 </li>
                 <li>
-                    <button style="background:#D2691E;float: left" onclick="cancle()">取消</button>
+                    <button style="background:#FF00FF;float: left" onclick="cancle()">取消</button>
                 </li>
                 <li>
-                    <button style="background:#4682B4" onclick="save()">保存</button>
+                    <button style="background:#008B8B" onclick="save()">保存</button>
                 </li>
                 <li>
                     <p id="indicator" style="background:gray;width: 40%;right: -40px">已选中</ps>
@@ -161,7 +161,7 @@ input,button{
     </div>
 <div id="bottom">
     <button style="padding: 0.5em" onclick="last()">上一条</button>
-    <a style="padding: 0.5em">当前选择：</a>
+    <a style="margin: 2px">当前选择：</a>
     <a id="selected" style="padding: 0.5em">等你点击或者选择</a>
     <button style="padding: 0.5em;float:right;" onclick="next()">下一条</button>
 </div>
@@ -193,6 +193,7 @@ input,button{
 function jump(){
     obj = document.getElementById("jump");
     current_sample_index=parseInt(obj.value);
+    spo=[];
     refresh();
 }
 function next(samples){
@@ -235,7 +236,21 @@ function start_end_index(index,label){
             return [start_index,end_index];
         }
 }
+function little_correction(relative_index,label){
+    var correction=0;
+    if(label[relative_index][0]!='B'){
+        // console.log('发现错位！');
+        if(label[relative_index-1][0]=='B')correction=-1;
+        else if(label[relative_index+1][0]=='B')correction=1;
+        else console.log('该错误无法修正!');
+    }
+    return correction;
+}
+// function text2obj_color(text,label,spos){
 function text2obj_color(text,label,spos){
+    var text=all_samples_loaded[current_sample_index];
+    var label=labels_current[current_sample_index];
+    var spos=all_spos_loaded[current_sample_index];
     var testobj=document.getElementById("CurrentContent");
     testobj.innerHTML="";
     for(var c in text){
@@ -244,35 +259,87 @@ function text2obj_color(text,label,spos){
 
         //实体关系可视化
         if(label[c].length>2){
-            if(label[c][2]=="实") char.style.backgroundColor="#DAA520";
-            else if(label[c][2]=="关") char.style.backgroundColor="#9ACD32";
+            if(label[c][2]=="实") char.style.backgroundColor="#4682B4";
+            else if(label[c][2]=="关") char.style.backgroundColor="#228B22";
             if(label[c][0]=="B") char.style.marginLeft="0.2em";
         }
         if(text[c]=="\n"){
-            char.style.backgroundColor="#800080";//紫色，突出换行符
+            char.style.backgroundColor="#00FF7F";//突出换行符
             testobj.appendChild(char);
             var br = document.createElement('br');//显示换行
             
             if(c!=0) testobj.appendChild(br);//首字符为换行的不显示
         }else  testobj.appendChild(char);//这一批样本首字符为换行符，统计但不显示
     }
+
     var testobj=document.getElementById("CurrentContent");
     var lists = Array.from(testobj.querySelectorAll('span'));
     //三元组可视化
     // var tag=["S","P","O"];
-    var colors=["#A52A2A","#008000","#4169E1"];
+    var colors=["#FF0000","#32CD32","#1E90FF"];
     if(spos.length>1){
         var this_page_index=spos[0];
         for(var i=1;i<spos.length;i++){
-            var spo=spos[i].split(">");
-            for(var j in spo){
-                var relative_index=parseInt(spo[j])-this_page_index;
+            var spo=spos[i];
+            var spo_overlap=['X','X','X'];
+            for(var j in spo){//s,p,o
+                if(spo[j]=='X')continue;
+                var relative_index=spo[j]-this_page_index;
+
+
+
+                if(relative_index<0){
+                    // console.log('发现relative_index<0的情况！');
+                    // console.log(relative_index);
+                    // console.log(this_page_index);
+                    // alert(spo[0]+'处三元组数据存在问题：'+spo[j]);
+                    continue;
+                }
+
+                if(relative_index>=label.length){
+                    var label_overlap2correcte=labels_current[current_sample_index+1];//下一页的标签进行修正
+                    var relative_index_tmp=spo[j]-all_spos_loaded[current_sample_index+1][0];
+                    var correction=little_correction(relative_index_tmp,label_overlap2correcte);
+                    // if(correction!=0){
+                    //     console.log(spo[j]);
+                    //     console.log('correction='+correction);
+                    // }
+                    all_spos_loaded[current_sample_index][i][j]=relative_index+this_page_index+correction;
+                    spo_overlap[j]=spo[j];
+                    // console.log(this_page_index);
+                    // console.log(spo[j]);
+                    // console.log(relative_index);
+                    // console.log('跨界三元组');
+                    continue;
+                }
+
+                    var correction=little_correction(relative_index,label);
+                    // if(correction!=0){
+                    //     console.log(spo[j]);
+                    //     console.log('correction='+correction);
+                    // }
+                    all_spos_loaded[current_sample_index][i][j]=relative_index+this_page_index+correction;
+                    relative_index+=correction;                    
+
                 var a_object=document.createElement("a");
                 a_object.style.marginLeft="0.2em";
                 a_object.innerHTML=i;
                 a_object.style.fontSize="0.2em";
                 a_object.style.backgroundColor=colors[j];
                 testobj.insertBefore(a_object,lists[relative_index]);
+            }//s,p,o end
+            for(var j in spo_overlap){
+                if(spo_overlap[j]!='X'){
+                    if((current_sample_index+1)<all_spos_loaded.length){
+                        if(all_spos_loaded[current_sample_index+1].join(';').indexOf(spo_overlap.join())==-1){
+                            // console.log('添加跨界三元组');
+                            // console.log(spo_overlap);
+                            all_spos_loaded[current_sample_index+1].push(spo_overlap);
+                         
+                        }
+                        break;    
+                    }
+                }
             }
         }
     }
@@ -292,24 +359,24 @@ function render_rectangle(start_end){
     if(start_end[0]==-1||start_end[1]==-1)return;
     var testobj=document.getElementById("CurrentContent");
     var lists = Array.from(testobj.querySelectorAll('span'));
-    var color="#800000";
+    var colors=["#FF0000","#32CD32","#1E90FF"];
     var start_obj=lists[start_end[0]];
     var end_obj=lists[start_end[1]];
     start_obj.style.borderLeft="solid";
     start_obj.style.borderTop="solid";
     start_obj.style.borderBottom="solid";
     // start_obj.style.fontSize="1.1em";
-    start_obj.style.borderColor=color;
+    start_obj.style.borderColor=colors[spo.length];
     end_obj.style.borderRight="solid";
     end_obj.style.borderTop="solid";
     end_obj.style.borderBottom="solid";
     // end_obj.style.fontSize="1.1em";
-    end_obj.style.borderColor=color;
+    end_obj.style.borderColor=colors[spo.length];
     for(var i=start_end[0]+1;i<start_end[1];i++){
         var span_obj=lists[i];
         span_obj.style.borderTop="solid";
         span_obj.style.borderBottom="solid";
-        span_obj.style.borderColor=color;
+        span_obj.style.borderColor=colors[spo.length];
         // span_obj.style.fontSize="1.1em";
 
     }
@@ -321,39 +388,74 @@ function save(){
     var labels_result=[];
     var tokens_result=[];
     var spo_result=[];
-    for(var i=0;i<contents.length;i++)spo_result.push("X");//初始化三元组域
+
+    //实体和关系
     for (var i = 0; i <labels_current.length; i++) {
         for (var j = 0; j<labels_current[i].length; j++) {
-            labels_result.push(labels_current[i][j]); 
-            tokens_result.push(all_samples_loaded[i][j]=="\n"? "_换行符_":all_samples_loaded[i][j]);
+            var l=labels_current[i][j];
+            var t=all_samples_loaded[i][j]=="\n"? "_换行符_":all_samples_loaded[i][j];
+            if(l==undefined){
+                alert('l发现问题'+l);
+                return;
+            }
+            if(t==undefined){
+                alert('t发现问题'+t);
+                return;
+            }
+            labels_result.push(l); 
+            tokens_result.push(t);
+
+            spo_result.push("X");//初始化三元组域
         }
         
     }
-    for(var i in all_spos_loaded){
-        if(all_spos_loaded[i].length==1)continue;
-        for(var j=1;j<all_spos_loaded[i].length;j++){
-            var spo_tmp=all_spos_loaded[i][j].split(">");
-            spo_result[parseInt(spo_tmp[0])]+=";"+spo_tmp.join(">");    
+    //三元组
+    for(var i in all_spos_loaded){//遍历每个页面的三元组列表
+        if(all_spos_loaded[i].length==1)continue;//每个all_spos_loaded[i]第一个元素为分割索引值
+
+        for(var j=1;j<all_spos_loaded[i].length;j++){//遍历当前页面下所有的三元组列表
+            if(all_spos_loaded[i][j][0]=='X'||all_spos_loaded[i][j][1]=='X'||all_spos_loaded[i][j][2]=='X') continue;
+            var spo_tmp=all_spos_loaded[i][j];
+            spo_result[spo_tmp[0]]+=";"+spo_tmp.join(">");    
         }
         
     }
-    for(var i in contents){
+    //字符 标签 三元组汇总
+    for(var i in spo_result){
         if(spo_result[i][1]==";"){
             spo_result[i]=spo_result[i].replace("X;","");
         }
-        results+=tokens_result[i]+"\t"+labels_result[i]+"\t"+spo_result[i]+"\n";
+        var t=tokens_result[i];
+        var l=labels_result[i];
+        if(l==undefined){
+            // console.log(i);
+            // console.log(labels_result.length);
+            alert('汇总时，l发现问题'+l);
+            return;
+        }
+        if(t==undefined){
+            // console.log(i);
+            // console.log(tokens_result.length);
+            alert('汇总时，t发现问题'+t);
+            return;
+            }
+        results+=t+"\t"+l+"\t"+spo_result[i]+"\n";
     }
     
     var blob = new Blob([results], {type: "text/plain;charset=utf-8"});
     saveAs(blob, filename+"#"+current_sample_index+"#"+".lann");
 }
+function indicator(on_off){
+    var indicator_obj=document.getElementById("indicator");
+    if(on_off=='on')    indicator_obj.style.backgroundColor="pink";
+    else indicator_obj.style.backgroundColor="gray";
+}
 function refresh(){
-    spo=[];
     var progress_obj=document.getElementById("progress");
     progress_obj.innerHTML="当前进度："+current_sample_index+"/"+total;
-    var indicator_obj=document.getElementById("indicator");
-    indicator_obj.style.backgroundColor="gray";
-    text2obj_color(all_samples_loaded[current_sample_index],labels_current[current_sample_index],all_spos_loaded[current_sample_index]);
+    // text2obj_color(all_samples_loaded[current_sample_index],labels_current[current_sample_index],all_spos_loaded[current_sample_index]);
+
+    text2obj_color();
     var annoted_spo_obj=document.getElementById("annoted_spo");
     annoted_spo_obj.innerHTML="已标注："+count_spo_lists+" 对三元组";
     var annoted_ent_obj=document.getElementById("annoted_entity");
@@ -363,37 +465,38 @@ function refresh(){
     var annoted_cap_obj=document.getElementById("cancle_point");
     annoted_cap_obj.innerHTML="已取消："+count_cancled_point+" 个标注点";
 }
+
 function add_entity(){
     var txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
-    console.log(txtselected);
+    // console.log(txtselected);
         if(txtselected!=""){
         var char=all_samples_loaded[current_sample_index][current_char_index];
         if(char!=txtselected[0]){
             
-            console.log(txtselected[0]);
-            console.log(all_samples_loaded[current_sample_index][current_char_index]);
-            console.log("开头点击偏了！");
-            console.log("current_char_index:"+current_char_index);
+            // console.log(txtselected[0]);
+            // console.log(char);
+            // console.log("开头点击偏了！");
+            // console.log("current_char_index:"+current_char_index);
             current_char_index-=txtselected.indexOf(char);
-            console.log(current_char_index);
+            // console.log(current_char_index);
         }
         var end_char=all_samples_loaded[current_sample_index][end_char_index];
         if(end_char_index!=-1&&end_char!=txtselected[txtselected.length-1]){
-            console.log(all_samples_loaded[current_sample_index][end_char_index]);
-            console.log(txtselected[txtselected.length-1]);
-            console.log("结尾点击偏了！");
-            console.log("end_char_index:"+end_char_index);
+            // console.log(end_char);
+            // console.log(txtselected[txtselected.length-1]);
+            // console.log("结尾点击偏了！");
+            // console.log("end_char_index:"+end_char_index);
             end_char_index+=(txtselected.length-txtselected.indexOf(end_char));
-            console.log(end_char_index);
+            // console.log(end_char_index);
         }
 
         labels_current[current_sample_index][current_char_index]='B_实体';
-        console.log("txtselected.length:"+txtselected.length);
+        // console.log("txtselected.length:"+txtselected.length);
 
         end_char_index=Math.max(txtselected.length+current_char_index-1,-1);
-        console.log("final:"+current_char_index+";"+end_char_index);
-        if(current_char_index<=0||end_char_index<=0)return;
+        // console.log("final:"+current_char_index+";"+end_char_index);
+        if(current_char_index<0||end_char_index<=0)return;
         for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_实体';
         }
@@ -402,6 +505,7 @@ function add_entity(){
                 labels_current[current_sample_index][j]="O";
         }
         count_new_entity+=1;
+        spo=[];
         refresh();
     }else if(start_end[0]!=-1){//选中后改成实体
             labels_current[current_sample_index][start_end[0]]='B_实体';
@@ -409,40 +513,41 @@ function add_entity(){
                 labels_current[current_sample_index][j]='I_实体';
         }
     }
+    spo=[];
     refresh();
 }
 function add_relation(){
     var txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
-    console.log(txtselected);
+    // console.log(txtselected);
     if(txtselected!=""){
         var char=all_samples_loaded[current_sample_index][current_char_index];
         if(char!=txtselected[0]){
             
-            console.log(txtselected[0]);
-            console.log(all_samples_loaded[current_sample_index][current_char_index]);
-            console.log("开头点击偏了！");
-            console.log("current_char_index:"+current_char_index);
+            // console.log(txtselected[0]);
+            // console.log(char);
+            // console.log("开头点击偏了！");
+            // console.log("current_char_index:"+current_char_index);
             current_char_index-=txtselected.indexOf(char);
-            console.log(current_char_index);
+            // console.log(current_char_index);
         }
         var end_char=all_samples_loaded[current_sample_index][end_char_index];
         if(end_char_index!=-1&&end_char!=txtselected[txtselected.length-1]){
-            console.log(all_samples_loaded[current_sample_index][end_char_index]);
-            console.log(txtselected[txtselected.length-1]);
-            console.log("结尾点击偏了！");
-            console.log("end_char_index:"+end_char_index);
+            // console.log(end_char);
+            // console.log(txtselected[txtselected.length-1]);
+            // console.log("结尾点击偏了！");
+            // console.log("end_char_index:"+end_char_index);
             end_char_index+=(txtselected.length-txtselected.indexOf(end_char));
-            console.log(end_char_index);
+            // console.log(end_char_index);
         }
-        console.log("txtselected.length:"+txtselected.length);
+        // console.log("txtselected.length:"+txtselected.length);
 
         labels_current[current_sample_index][current_char_index]='B_关系';
         // for (var j = current_char_index+1; j<txtselected.length+current_char_index; j++) {
         //若使用txtselected.length的方法，遇见双空格的情况时，length长度不正确
         end_char_index=Math.max(txtselected.length+current_char_index-1,-1);
-        console.log("final:"+current_char_index+";"+end_char_index);
-        if(current_char_index<=0||end_char_index<=0)return;
+        // console.log("final:"+current_char_index+";"+end_char_index);
+        if(current_char_index<0||end_char_index<=0)return;
         for (var j = current_char_index+1; j<=end_char_index; j++) {
             labels_current[current_sample_index][j]='I_关系';
         }
@@ -451,6 +556,7 @@ function add_relation(){
                 labels_current[current_sample_index][j]="O";
         }
         count_new_relation+=1;
+        spo=[];
         refresh();
     }else if(start_end[0]!=-1){//选中后改成关系
             labels_current[current_sample_index][start_end[0]]='B_关系';
@@ -458,6 +564,7 @@ function add_relation(){
                 labels_current[current_sample_index][j]='I_关系';
         }
     }
+    spo=[];
     refresh();
 }
 function cancle(){
@@ -477,6 +584,8 @@ function cancle(){
             labels_current[current_sample_index][j]='O';
         }
     }
+    spo=[];
+    indicator('off');
     refresh();
 }
 document.documentElement.addEventListener('mousedown', function (event) {
@@ -500,33 +609,47 @@ document.documentElement.addEventListener('click', function (event) {
         selected_obj.innerHTML=item.innerHTML+" : "+current_char_index+" : "+total_char_index+" : "+labels_current[current_sample_index][current_char_index];
         if(spo.indexOf(total_char_index)!=-1||labels_current[current_sample_index][start_end[0]][0]!="B"){//重复点击和点错的情况
             spo=[];
-            var indicator_obj=document.getElementById("indicator");
-            indicator_obj.style.backgroundColor="gray";
+            indicator('off');
             for(var i in lists)lists[i].style.border="None";
             return;
         }
         spo.push(total_char_index);
-        var indicator_obj=document.getElementById("indicator");
-        indicator_obj.style.backgroundColor="pink";
+        indicator('on');
         if(spo.length==3){
-            if(all_spos_loaded[current_sample_index].indexOf(spo.join(">"))==-1){//新的三元组
-                console.log(all_spos_loaded[current_sample_index]);
-                all_spos_loaded[current_sample_index].push(spo.join(">"));
+            if(all_spos_loaded[current_sample_index].join(";").indexOf(spo.join())==-1){//新的三元组
+                // console.log(all_spos_loaded[current_sample_index]);
+                // console.log(spo);
+                // var spo_tmp_number=[];
+                // for(var si in spo)spo_tmp_number.push(spo[si]);
+                var sample_index2store=(spo[0]-all_spos_loaded[current_sample_index][0])<0?current_sample_index-1:current_sample_index;//判断是否跨页面的三元组
+                if(sample_index2store!=current_sample_index){
+                    //给本页面添加跨页面三元组
+                    var spo_overlap=['X','X','X'];
+                    var previous_page_index=all_spos_loaded[current_sample_index-1][0];
+                    var previous_label=labels_current[current_sample_index-1];
+                    for(var j in spo){//s,p,o
+                        var relative_index=spo[j]-previous_page_index;
+                        if(relative_index>=previous_label.length) spo_overlap[j]=spo[j];
+                    }
+                    // console.log(spo_overlap);
+                    if(all_spos_loaded[current_sample_index].join(';').indexOf(spo_overlap.join())==-1)                          all_spos_loaded[current_sample_index].push(spo_overlap);
+                }
+                all_spos_loaded[sample_index2store].push(spo);
                 count_spo_lists+=1;
                 spo=[];
             }
-            var indicator_obj=document.getElementById("indicator");
-            indicator_obj.style.backgroundColor="gray";
+            indicator('off');
             for(var i in lists)lists[i].style.border="None";
+            spo=[];
             refresh();
         }
 	}else if(window.getSelection().toString()!="" && $(item).attr("id")=="CurrentContent"){////处理文字选中的情况
 		var txt=window.getSelection().toString();
         current_char_index=Math.min(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
         end_char_index= Math.max(lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup));
-        console.log('Calculate end_char_index');
-        console.log(lists.indexOf(obj_mousedown));
-        console.log(lists.indexOf(obj_mouseup));
+        // console.log('Calculate end_char_index');
+        // console.log(lists.indexOf(obj_mousedown));
+        // console.log(lists.indexOf(obj_mouseup));
         if(current_char_index==-1){
             window.getSelection().removeAllRanges();
             return;
@@ -534,10 +657,12 @@ document.documentElement.addEventListener('click', function (event) {
         total_char_index_cal();
         var selected_obj=document.getElementById("selected");
         selected_obj.innerHTML=txt+" : "+total_char_index;
-	}else{
+	}else if(item.tagName=="BUTTON"){
+        return;
+    }
+    else{
         spo=[];//点击空白处，清除已有的spo
-        var indicator_obj=document.getElementById("indicator");
-        indicator_obj.style.backgroundColor="gray";
+        indicator('off');
         for(var i in lists)lists[i].style.border="None";
     }
 })
@@ -577,20 +702,31 @@ $("#fileImport").click(function () {
                 var spo_tmp=[];
                 var spo_dic_tmp=[];
                 var spo_lists_per_page=[0];
+                var mode=-1;
                 count_spo_lists=0;
                 imported_flag=1;
                 all_spos_loaded=[];
                 contents=txts.split("\n");
                 if(contents[0].indexOf("\t")==-1)contents=columnlize(txts).split("\n");
-                for(i in contents){
-                	c_l=contents[i].split("\t");
 
+                mode=contents[0].split("\t").length;
+
+                for(i in contents){
+                    if(contents[i].length==0)continue;//空行
+                	c_l=contents[i].split("\t");
+                    if(c_l.length!=mode){//标注完整性检查
+                        alert(i+'处标注存在问题！');
+                        return;
+                    }
                     if(c_l.length>=3){//包含三元组空间，读取进来
                         spo_read=c_l[2];
                         if(spo_read[0]!="X"){                      
                             var spos=spo_read.split(";"); 
                             for(var k in spos){
-                                spo_lists_per_page.push(spos[k]);
+                                var spos_number=[];
+                                var spo_tmp_number=spos[k].split(">");
+                                for(var j in spo_tmp_number)spos_number.push(parseInt(spo_tmp_number[j]));
+                                spo_lists_per_page.push(spos_number);
                                 count_spo_lists+=1;
                                 }
                             }
@@ -601,20 +737,35 @@ $("#fileImport").click(function () {
                     else l=c_l[1];
                     
                     
-                	if((c=="。" ||c=='_换行符_')&&(tmp.length>250)){
+                	// if((c=="。" ||c=='_换行符_')&&(tmp.length>400)){
+                    if((c=='_换行符_')&&(tmp.length>400)){                        
                         c= c=='_换行符_' ? "\n" : c;
                 		tmp+=c;
                         label_tmp.push(l);
+
                 		samples.push(tmp);
                         all_spos_loaded.push(spo_lists_per_page);
                         spo_lists_per_page=[parseInt(i)+1];
                         labels.push(label_tmp);
+                        if(tmp.length!=label_tmp.length){
+                            // console.log(tmp.length);
+                            // console.log(label_tmp.length);
+                            alert('分割时，tmp 和 label_tmp长度不同！');
+                            return;
+                        }
                         label_tmp=[];
                 		tmp="";
                 	}else{
                         c= c=='_换行符_' ? "\n" : c;
+
                 		tmp+=c;
                         label_tmp.push(l);
+                        if(tmp.length!=label_tmp.length){
+                            // console.log(tmp.length);
+                            // console.log(label_tmp.length);
+                            alert('字符和标签长度不对应，检查数据！');
+                            return;
+                        }
                 	}
                 }
 
@@ -623,6 +774,7 @@ $("#fileImport").click(function () {
                     labels.push(label_tmp);
                     all_spos_loaded.push(spo_lists_per_page);
                 }
+
                 current_sample_index=-1;
                 if(filename.indexOf("#")!=-1){//尝试从文件名中读取上次标注页码
                     page_saved=filename.split("#");
@@ -635,12 +787,13 @@ $("#fileImport").click(function () {
                     current_sample_index=0;//初始页码    
                     filename+=".";
                 }
-                
+                // current_sample_index=0;//for debug
                 total=samples.length-1;
                 count_new_entity=0;
                 count_new_relation=0;
                 count_cancled_point=0;
                 var jump_option_object=document.getElementById("jump");
+                jump_option_object.options.length=0;
                 for(var i=0;i<samples.length;i++){
                     var option_obj=document.createElement("option");
                     option_obj.value=i;
@@ -649,6 +802,7 @@ $("#fileImport").click(function () {
                 }
                 all_samples_loaded=samples;
                 labels_current=labels;
+                spo=[];
                 refresh();
             }
 
