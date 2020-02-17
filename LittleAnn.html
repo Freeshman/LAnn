@@ -268,7 +268,6 @@ function selecte(){
     }
 }
 function next(key_triger){
-    selected_flag=false;
     if(number_input!="") var line_change=eval(number_input);
     else var line_change=1;
     for(var j=0;j<line_change;j++){
@@ -283,7 +282,6 @@ function next(key_triger){
     refresh();
 }
 function previous(key_triger){
-    selected_flag=false;
     if(number_input!="") var line_change=eval(number_input);
     else var line_change=1;
     for(var j=0;j<line_change;j++){
@@ -416,7 +414,9 @@ function cursor_left(){
     else cursor_index-=1;
     number_input="";
     document.getElementById('number_input').innerHTML="";
-    if(cursor_index<0)previous(true);
+    if(cursor_index<0){
+        previous(true);
+    }
     cursor_obj=lists[cursor_index];
     cursor_obj.style.color='#4a4948';
     cursor();
@@ -427,7 +427,9 @@ function cursor_right(){
     else cursor_index+=1;
     number_input="";
     document.getElementById('number_input').innerHTML="";
-    if(cursor_index>=lists.length)next(true);
+    if(cursor_index>=lists.length){
+        next(true);
+    }
     cursor_obj=lists[cursor_index];
     cursor_obj.style.color='#4a4948';
     cursor();
@@ -523,6 +525,11 @@ function text2obj_color(text,label,spos){
     var line_number_display_obj=document.getElementById("line_number");
     testobj.innerHTML="";
     line_number_display_obj.innerHTML="";
+    if(selected_flag){
+        indicator('off');
+        selected_flag=false;
+        txtselected="";
+    }
     for(var c in text){
         var char = document.createElement('span');
         char.id='span'+c;
