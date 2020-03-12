@@ -234,6 +234,7 @@ input,button{
     var lists;
 
     var selected_flag=false;
+    var double_click_change_flag=false;
 
     keyboard_bind();
     //双击检测用
@@ -965,6 +966,7 @@ function add_entity(){
 //    console.log('------');//dev
 //    console.log(txtselected);//dev
     indicator('off');//dev
+    double_click_change_flag=true;
     if(txtselected=="") txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
     selected_flag=false;
@@ -1037,6 +1039,8 @@ function add_entity(){
     txtselected="";
     spo_global=[];
     refresh();
+    double_click_change_flag=true;
+
 }
 function add_relation(){
     indicator('off');
@@ -1107,10 +1111,11 @@ function add_relation(){
     txtselected="";
     spo_global=[];
     refresh();
+    double_click_change_flag=true;
+
 }
 function cancle(){
     selected_flag=false;
-    indicator('off');
     if(txtselected=="") txtselected=window.getSelection().toString();
     var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
 //    console.log(current_char_index,start_end);//dev
@@ -1248,11 +1253,20 @@ document.documentElement.addEventListener('click', function (event) {
     if(item.tagName=="SPAN"){
         var tappedNow = item;
         current_char_index=lists.indexOf(item);
-        if(current_char_index!=-1) return;
+//        console.log(current_char_index,double_click_change_flag);//dev
+
+        if(current_char_index==-1){//点击的地方无效或者 
+            return;
+        }
+//        console.log('移动光标');//dev
+        change_cursor_index(current_char_index);//移动光标，快速响应
+        cursor();
+//        console.log(tappedBefore,tappedNow);//dev
         if (tappedTimeout && tappedBefore) {
           clearTimeout(tappedTimeout);
         }
-        if(tappedBefore === tappedNow) {
+        
+        if(tappedBefore == tappedNow) {
 //          console.log('双击');//dev
           tappedBefore = null;
           click_handle(current_char_index,true);
@@ -1260,6 +1274,9 @@ document.documentElement.addEventListener('click', function (event) {
           tappedTimeout = setTimeout(function(){ 
             tappedBefore = null; 
 //            console.log('单击');//dev
+//            console.log(current_char_index,double_click_change_flag);//dev
+
+            
             click_handle(current_char_index,false); 
         }, 180);
           tappedBefore = tappedNow;
@@ -1300,8 +1317,10 @@ document.documentElement.addEventListener('click', function (event) {
 })
 function click_handle(current_char_index,lock){
         //处理鼠标单击的情况
-        change_cursor_index(current_char_index);
-        cursor();
+        if(double_click_change_flag){
+                 double_click_change_flag=false;
+                return;//防止键盘已经操作，双击又选中的情况
+        }
         var start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
 
         if(start_end[0]==-1||start_end[1]==-1)return;
