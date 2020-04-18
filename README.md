@@ -43,7 +43,7 @@ LAnnBack为后台辅助标记部分，内含实体分类模型和序列标注模
 
 `python manage.py runserver 0.0.0.0:8000`
 
-**注意:**如果辅助标注服务器为本地计算机，需要安装django-cors-headers和设置来解决跨域访问问题。
+**注意:** 如果辅助标注服务器为本地计算机，需要安装django-cors-headers和设置来解决跨域访问问题。
 
 ## TODO
 
