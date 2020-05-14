@@ -1486,7 +1486,7 @@ function click_handle(current_char_index,lock){
         if(start_end[0]==-1||start_end[1]==-1)return;
         total_char_index=total_char_index_cal(start_end[0]);
     //单击未锁定且重复点击
-    if(!lock&&(spo_global.indexOf(total_char_index)!=-1||labels_current[current_sample_index][start_end[0]][0]!="B"||labels_current[current_sample_index][start_end[0]][2]!="实")){//重复点击和点错的情况
+    if(!lock&&(spo_global.indexOf(total_char_index)!=-1||labels_current[current_sample_index][start_end[0]][0]!="B"||(labels_current[current_sample_index][start_end[0]][2]!="实")&&(spo_global.length==0))){//重复点击、所选头字符标签不是B、第一个元素点击关系的情况
         clean_rectangle();
 
         //恢复已锁定的三元组病可视化
