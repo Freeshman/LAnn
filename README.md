@@ -8,11 +8,11 @@ LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注
 [试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体关系类型
-![实体关系类型](https://freeshman.github.io/LAnn/entity_relation_class_config.png)
+![实体关系类型](https://github.com/Freeshman/LAnn/blob/master/entity_relation_class_config.png)
 ### 配置按键映射（如需要）
-![实体关系类型](https://freeshman.github.io/LAnn/key_config.png)
+![实体关系类型](https://github.com/Freeshman/LAnn/blob/master/key_config.png)
 ### 配置辅助标注模型
-![实体关系类型](https://freeshman.github.io/LAnn/model_config.png)
+![实体关系类型](https://github.com/Freeshman/LAnn/blob/master/model_config.png)
 ## LAnn读取文件
 标注工具可以直接读取：
 - 原始文本
