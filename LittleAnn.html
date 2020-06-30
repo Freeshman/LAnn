@@ -86,7 +86,7 @@ a{
     float: right;
     position: fixed;
     right: 2em;
-    margin-top: 13em;
+    margin-top: 4em;
 }
 #info_list ul {
     padding: 0em;
@@ -315,7 +315,9 @@ input,button{
     var cursor_auto_run_flag=false;
 
     var cut_save_flag=false;
-
+window.onresize = function(){
+    refresh();
+}
 $("#cut_save_flag").change(function() {
     if(document.getElementById('cut_save_flag').checked) cut_save_flag=true;
     else cut_save_flag=false;
@@ -1381,6 +1383,9 @@ function cancle(){
                 }
 
             }
+        var cancle_poin_obj=document.getElementById("cancle_point");
+        cancle_poin_obj.style.innerHTML="gray";
+        count_cancled_point+=1;
     }
     txtselected="";
     spo_global=[];
