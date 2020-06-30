@@ -8,11 +8,11 @@ LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注
 [试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体关系类型
-![实体关系类型](https://freeshman.github.io/LAnn/实体关系类型配置.png)
+![实体关系类型](https://freeshman.github.io/LAnn/entity_relation_class_config.png)
 ### 配置按键映射（如需要）
-![实体关系类型](https://freeshman.github.io/LAnn/按键配置.png)
+![实体关系类型](https://freeshman.github.io/LAnn/key_config.png)
 ### 配置辅助标注模型
-![实体关系类型](https://freeshman.github.io/LAnn/辅助模型配置.png)
+![实体关系类型](https://freeshman.github.io/LAnn/model_config.png)
 ## LAnn读取文件
 标注工具可以直接读取：
 - 原始文本
@@ -48,13 +48,13 @@ LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注
 - 三元组域：包含相同S的三元组都记录在S首字符那一行，三元组之间采用“;”相隔，方便分割；SPO用“>”相隔。不构成三元组的字符该域为“X”。
 ## Django后台辅助标注
 LAnnBack为后台辅助标记部分，内含实体分类模型和序列标注模型。
-
+**前段：**
 - 勾选**序列辅助标注** 会将当前页面的文本进行序列预标注
 - 设定实体或关系时，辅助给出相应的分类和概率
-
-两个模型采用的Pytorch框架，两个模型各自对应一个things2id，读取各自的label文件，共享字符转id文件。
-
-辅助标注后台如果收到带有标签的样本，将在new文件夹下记录新的样本，用于后期模型的训练。
+**后端:**
+- 接收数据形式根据server.js确定
+- LAnnBack/UI.py文件中，process和triple_relation_classfy分别对应实体分类和序列标注方法，适当修改调用自己的模型。
+- 辅助标注后台如果收到带有标签的样本，将在new文件夹下记录新的样本，用于后期模型的训练。
 
 开启辅助标注后台：
 
