@@ -1360,7 +1360,7 @@ function add_entity(){
       start_end=start_end_index(current_char_index,labels_current[current_sample_index]);
       if(start_end[1]==-1&&(start_end[0]+1)<all_samples_loaded[current_sample_index].length)
         txtselected=all_samples_loaded[current_sample_index][start_end[0]]+all_samples_loaded[current_sample_index][start_end[0]+1];
-      else return;
+      else if(start_end[1]==-1&&(start_end[0]+1)>=all_samples_loaded[current_sample_index].length) return; 
       for(var i=start_end[0];i<=start_end[1];i++)txtselected+=all_samples_loaded[current_sample_index][i];
       // ####else for(var i=start_end[0];i<=start_end[1];i++)txtselected+=all_samples_loaded[current_sample_index][i];
     }
