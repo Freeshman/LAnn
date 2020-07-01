@@ -1343,10 +1343,8 @@ function refresh(){
     // console.log(spo_global);//debug
     for (var i = 0; i<spo_global.length; i++) {
       if(spo_global[i][0]=='关')continue;//跳过隐含关系
-      if(parseInt(spo_global[i])>=parseInt(all_spos_loaded[current_sample_index][0][0])&&parseInt(spo_global[i])<(lists.length+parseInt(all_spos_loaded[current_sample_index][0][0]))){//位于当前页
-                // console.log(spo_global[i],all_spos_loaded[current_sample_index][0][0],lists.length)//debug
-            render_rectangle(start_end_index(total_char_index_2_relative_index(spo_global[i])[1],labels_current[current_sample_index]),i);
-          }
+      if(page_index[0]==current_sample_index)
+         render_rectangle(start_end_index(page_index[1],labels_current[current_sample_index]),i);
     }
 }
 
