@@ -1,7 +1,7 @@
 function server_triple_relation_classfy(triple_relation_classfy_list,label,add_delete='add'){
 //  console.log(seqlab_flag,sample);//dev
   $.ajax({
-        url:'http://127.0.0.1:8000/triple_relation_classfy/',//目的php文件
+        url:'http://0.0.0.1:8000/triple_relation_classfy/',//目的php文件
         // data:{"e1":e1,"e1_index":e1_index,"e2":e2,"e2_index":e2_index,"tokens":tokens},//传输的数据
         data:{"sample":triple_relation_classfy_list,'label':label,'add_delete':add_delete},//传输的数据
         type:'post',//数据传送的方式get/post
@@ -28,7 +28,7 @@ function seq_labing_to_server(seqlab_flag,sample){
 //  console.log(seqlab_flag,sample);//dev
   if(!seqlab_flag)return;
   $.ajax({
-        url:'http://127.0.0.1:8000/seqlab/',//目的php文件
+        url:'http://0.0.0.1:8000/seqlab/',//目的php文件
         data:{"sample":sample},//传输的数据
         type:'post',//数据传送的方式get/post
         // type:'get',//数据传送的方式get/post
@@ -47,7 +47,7 @@ function seq_labing_to_server(seqlab_flag,sample){
 function to_server(server_usable,entity,sample,index_s,index_e,tokens,label,add_delete='add'){
 //    console.log(sample,label); //dev
     $.ajax({
-          url:'http://127.0.0.1:8000/pr/',//目的php文件
+          url:'http://0.0.0.1:8000/pr/',//目的php文件
           data:{"sample":sample,"index_s":index_s,"index_e":index_e,"tokens":tokens,"label":label,'add_delete':add_delete},//传输的数据
           type:'post',//数据传送的方式get/post
           // type:'get',//数据传送的方式get/post
