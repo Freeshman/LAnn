@@ -1784,9 +1784,7 @@ function cancle(){
             if(labels_current[current_sample_index][j][0]!="I"&&j>=(end_char_index)) break;//一直改变标签直到末尾
             labels_current[current_sample_index][j]='O';
         }
-        var cancle_poin_obj=document.getElementById("cancle_point");
-        cancle_poin_obj.style.innerHTML="gray";
-        count_cancled_point+=1;
+        
     }else if(start_end_tmp[0]!=-1){//选中后取消
 // console.log('选中后取消');//dev
             if(start_end_tmp[1]==-1){
@@ -1890,24 +1888,24 @@ function spo_record(start_end_tmp){
 function find_token_start(index_relative,tokens){
     if(index_relative==0)return 0;
     for(var i=index_relative-1;i>0;i--){
-        if(tokens[i]=='\n'||tokens[i]=='。')return i+1;
+        if(tokens[i]=='_换行符_'||tokens[i]=='。')return i+1;
     }
     return i;
 }
 function find_token_end(index_relative,tokens){
     if(index_relative==(tokens.length-1))return index_relative;
     for(var i=index_relative+1;i<tokens.length;i++){
-        if(tokens[i]=='\n'||tokens[i]=='。')return i;
+        if(tokens[i]=='_换行符_'||tokens[i]=='。')return i;
     }
     return i;
 }
 function extract_tokens(token_start,token_end,page_start,page_end){
     if(page_start==page_end){
-        return all_samples_loaded[page_start].slice(token_start,token_end+1);
+        return all_samples_loaded[page_start].slice(token_start,token_end+1).join('');
     }else{
 // console.log(all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length));//dev
 // console.log(all_samples_loaded[page_start].slice(0,token_end+1));//dev
-        return all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length)+all_samples_loaded[page_end].slice(0,token_end+1);
+        return (all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length)+all_samples_loaded[page_end].slice(0,token_end+1)).join('');
     }
 }
 function extract_entity(start_end_tmp,tokens){
@@ -2130,8 +2128,9 @@ $("#fileImport").click(function () {
 
                 if(contents[0].indexOf("\t")==-1)contents=coloumnlize(txts).split("\n");
 
-                mode=contents[0].split("\t").length;
+                mode=contents[0].trim().split("\t").length;
                 for(i in contents){
+                    contents[i] = contents[i].trim();
                     if(contents[i].length==0)continue;//空行
                     c_l=contents[i].split("\t");
                       // if(c_l.length!=mode){//标注完整性检查
@@ -2151,7 +2150,7 @@ $("#fileImport").click(function () {
                                   var spos_char=[];
                                   var spo_tmp_char=spos[k].split(">");//切分单个三元组
                                   // for(var j in spo_tmp_number)spos_number.push(parseInt(spo_tmp_number[j]));
-                                  for(var j in spo_tmp_char)spos_char.push(spo_tmp_char[j]);
+                                  for(var j in spo_tmp_char)spos_char.push(spo_tmp_char[j].trim());
                                   if(query_2dlist(spo_lists_per_page,spos_char)==-1){
                                         spo_lists_per_page.push(spos_char);
                                         count_spo_lists+=1;
@@ -2162,6 +2161,7 @@ $("#fileImport").click(function () {
                               }
                           }
 
+                      if(c_l.length==2&&mode==3&&('BIO'.indexOf(c_l[0]!=-1))) c_l = [' '].concat(c_l);
                       c=c_l[0];
                       if(c_l.length==1)l="O";//原始文本，无标注
                       else l=c_l[1];
@@ -2169,7 +2169,7 @@ $("#fileImport").click(function () {
 
                     if((c=='_换行符_')&&(tmp.length>400)){
                             tmp.push(c);
-                            label_tmp.push(l);
+                            label_tmp.push(l.trim());
                             samples.push(tmp);
                             all_spos_loaded.push(spo_lists_per_page);
                             var page_index=parseInt(i)+1;
@@ -2184,16 +2184,14 @@ $("#fileImport").click(function () {
                             label_tmp=[];
                             tmp=[];
                     }else{
-                         
-
                       tmp.push(c);
-                          label_tmp.push(l);
-                          if(tmp.length!=label_tmp.length){
-                              myconsole(tmp.length);
-                              myconsole(label_tmp.length);
-                              alert('字符和标签长度不对应，检查数据！');
-                              return;
-                          }
+                      label_tmp.push(l.trim());
+                      if(tmp.length!=label_tmp.length){
+                          myconsole(tmp.length);
+                          myconsole(label_tmp.length);
+                          alert('字符和标签长度不对应，检查数据！');
+                          return;
+                      }
                     }
                   }
 
