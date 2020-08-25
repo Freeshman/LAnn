@@ -21,6 +21,8 @@ span{
     margin-top: 2em;
     padding-left: 0.1em;
     height: 21px;
+    word-break: break-all;
+
     /*float: left;*/
     /*width: 20px;*/
 }
@@ -82,7 +84,7 @@ a{
     float: left;
     position: relative;
     z-index: -999;
-
+    word-break: break-all;
 }
 #info_list{
     /*width: 15%;*/
@@ -760,6 +762,8 @@ function selecte(){
         spo_global=[];
 // console.log('清空spo_global sp_lock');//dev
         clean_rectangle();
+        clean_lines();
+
     }else{
         selected_flag=true;
         indicator('on');
@@ -852,11 +856,7 @@ function jump_2_char_total_index(){
 }
 function insert_char(){
     var char_2_insert = document.getElementById("insert_input").value;
-    if(char_2_insert.length==0)return;
-    // if(char_2_insert.length>1){
-    //     alert("只支持单个字符的插入！");
-    //     return;
-    // }
+    if(char_2_insert.length==0 || char_2_insert.length>2) char_2_insert=' ';
     char_2_insert = char_2_insert=='\\n'? '_换行符_':char_2_insert;//界面显示和存储转换
     let total_char_index_tmp=total_char_index_cal(current_char_index);
     let sententce = all_samples_loaded[current_sample_index];
@@ -1231,7 +1231,251 @@ function cursor(){
     //按照光标位置改变current_char_index
     current_char_index=cursor_index;
     bottom_display(current_char_index);
+    clean_lines();
+    outline_triple(current_char_index);
+}
+function outline_triple(current_char_index){
+    if(spo_global.length!=0)return;
+    var start_end_tmp=start_end_index(current_char_index,labels_current[current_sample_index]);
+    var total_char_index_tmp=total_char_index_cal(start_end_tmp[0]);
+    if(lists[start_end_tmp[0]].Id!=undefined){
+        
+        var relations_tmp=lists[start_end_tmp[0]].Id.split(';');
+        var pos_x_drawed = [];
+        var offset_h = 30;
+        var offset_w = 2;
+        for(var re in relations_tmp){
+            var spo_tmp = relations_tmp[re].split(',');
+            var h_offset = -re*offset_h;
+            var w_offset = re*offset_w ;
+            var pos = [];
+            // draw_line([100,200],[300,400]);
+            // console.log(h_offset,w_offset);
+            for(var j=0;j<spo_tmp.length-1;j++){
+                if(spo_tmp[j][0]=='关' || j==1){
+                    //特定颜色
+                    continue;
+                }
+                var page_index_tmp = total_char_index_2_relative_index(parseInt(spo_tmp[j]));
+                if(page_index_tmp[0]==current_sample_index){
+                    var geo = lists[page_index_tmp[1]].getBoundingClientRect();
+                    pos.push(geo.left);
+                    pos.push(geo.top);
+                }else if(page_index_tmp[0]>current_sample_index){
+                    pos.push(0);//Right side,odd
+                    pos.push(-888);
+                }else if(page_index_tmp[0]<current_sample_index){
+                    pos.push(-888);
+                    pos.push(0);//Left side
+                }
+                
+                // if(page_index_tmp[0]==current_sample_index){
+                    // render_rectangle(start_end_index(page_index_tmp[1],labels_current[current_sample_index]),3,style='outset');
+                // }
+            }
+            while(pos_x_drawed.indexOf(pos[2])!=-1) pos[2]+=10;//x
+            while(pos_x_drawed.indexOf(pos[0])!=-1) pos[0]+=10;//x
+            draw_line([pos[0],pos[1]],[pos[2],pos[3]], 80 - h_offset,geo.height ,spo_tmp[3]+':'+spo_tmp[1]);
+            pos_x_drawed.push(pos[2]);
+            pos_x_drawed.push(pos[0]);
+        }
+    }
+}
+function create_arrow(direction,color="#f00",left,top){//0-3:up down left right
+    var arrow = document.createElement('div');
+    arrow.className = 'lines';
+    arrow.style.position = 'absolute';
+    
+    arrow.style.top = top+"px";
+    arrow.style.left = (left-6)+"px";
+    if(direction==0){//up
+        arrow.style.width = "4px";
+        arrow.style.height = "0px";
+        arrow.style.borderBottom = '15px solid '+color;
+        arrow.style.borderLeft = '5px solid transparent';
+        arrow.style.borderRight = '5px solid transparent';
+    }else if(direction==1){//down
+        arrow.style.width = "4px";
+        arrow.style.height = "0px";
+        arrow.style.borderTop = '15px solid '+color;
+        arrow.style.borderLeft = '5px solid transparent';
+        arrow.style.borderRight = '5px solid transparent';
+    }else if(direction==2){//left
+        arrow.style.width = "0px";
+        arrow.style.height = "4px";
+        arrow.style.borderRight = '15px solid '+color;
+        arrow.style.borderTop = '5px solid transparent';
+        arrow.style.borderBottom = '5px solid transparent';    
+    }else if(direction==3){//right
+        arrow.style.width = "0px";
+        arrow.style.height = "4px";
+        arrow.style.borderLeft = '15px solid '+color;
+        arrow.style.borderTop = '5px solid transparent';
+        arrow.style.borderBottom = '5px solid transparent';    
+    }
+    return arrow
+}
+function draw_line(pos1,pos2,h1 = 80,h_obj = 0,label=''){
+    /*
+            ________l2___________
+        l1  pos1_line1          pos2_line2
+            |                   | 
+h_for_l1    |                   |  l3
+            |                   pos2_in    h_for_l3
+            pos1_in                
+    Attention:
+        1. l1.top = l2.top = l3.top
+        2. l2.width = abs(pos1.x-pos2.x)
+        3. top_y = min(pos1.y,pos2.y)
+        4. Dont confuse with pos1_in with pos1_line1
+    */
+    // console.log(pos1,pos2,h_obj);//dev
+    var min_w = 135;
+    var line1_obj = document.createElement('div');
+    var line2_obj = document.createElement('div');
+    var line3_obj = document.createElement('div');
+    line1_obj.className = 'lines';
+    line2_obj.className = 'lines';
+    line3_obj.className = 'lines';
 
+    var color = '#d';
+    var str = "0123456789abcdef";
+    for(var i=0;i<2;i++) color+=str.charAt(Math.ceil(Math.random()*(str.length-1)));
+    // console.log(color);//dev
+    var h_for_l1 = 1;
+    var h_for_l3 = 1;
+
+    var situation = '';//根据不同的situation创建相应的箭头
+    if(pos1[1]<0){//e1_right
+        pos1[1] = pos2[1];
+        pos1[0] = pos2[0] + 150;
+        situation = 'e1_right';
+    }
+    else if(pos2[1]<0){//e2_right
+        pos2[1] = pos1[1];
+        pos2[0] = pos1[0] + 150;
+        h_for_l3 = 0;
+        situation = 'e2_right';
+        
+    }else if(pos1[0]<0){//e1_left
+        pos1[1] = pos2[1];
+        pos1[0] = pos2[0] - 150;
+        h_for_l1 = 0;
+        situation = 'e1_left';
+    }else if(pos2[0]<0){//e2_left
+        pos2[1] = pos1[1];
+        pos2[0] = pos1[0] - 150;
+        h_for_l3 = 0;
+        situation = 'e2_left';
+    }else situation = 'same_page';
+    var top_y = Math.min(pos1[1],pos2[1]) - h1;//往上移动h1个高度
+    var left_x = Math.min(pos1[0],pos2[0]);
+    h_for_l1 = h_for_l1*(pos1[1] - top_y) ;
+    h_for_l3 = h_for_l3*(pos2[1] - top_y) ;
+    var y_set1 = top_y;
+    var y_set3 = top_y;
+    var y_label = top_y;
+
+
+    if(top_y<100){//太靠上了，下方显示，箭头向上
+        var low_y = Math.max(pos1[1],pos2[1]) + h_obj + h1;//obj的下方开始
+        y_set1 = pos1[1] + h_obj;
+        y_set3 = pos2[1] + h_obj;
+
+        y_label = low_y;
+        situation +='_uparrow';
+    }else{
+        situation +='_downarrow';
+    }
+    // console.log(situation);//dev
+    if(situation.indexOf('uparrow')!=-1){
+        var arrow = create_arrow(2,color,pos2[0],pos2[1]);
+
+        if(situation.indexOf('e2_right')!=-1){
+            var arrow = create_arrow(3,color,pos2[0],pos2[1]+h_obj+h1-6);//right_arrow
+        }
+        else if(situation.indexOf('e2_left')!=-1){
+            var arrow = create_arrow(2,color,pos2[0],pos2[1]+h_obj+h1-6);//left_arrow
+        } 
+        else{
+            var h_for_l1 = low_y - pos1[1] - h_obj; //根据最低的y值和对象y值计算高度
+            var h_for_l3 = low_y - pos2[1] - h_obj;
+            var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_obj);//up_arrow
+        }
+    }else{
+        if(situation.indexOf('e2_right')!=-1){
+            var arrow = create_arrow(3,color,pos2[0],pos2[1]-h1-6);//right_arrow
+        }
+        else if(situation.indexOf('e2_left')!=-1){
+            var arrow = create_arrow(2,color,pos2[0],pos2[1]-h1-6);//left_arrow
+        }
+        else{
+            var arrow = create_arrow(1,color,pos2[0],pos2[1]-15);//减去箭头自身的高度//down_arrow
+        } 
+    }
+    if(situation.indexOf('e1')!=-1)         h_for_l1 = 0;
+    if(situation.indexOf('e2')!=-1)         h_for_l3 = 0;
+    // console.log(h_for_l1,h_for_l3);//dev
+
+    line1_obj.style.borderLeft = "3px dotted "+color;
+    line1_obj.style.position = "absolute";
+    line1_obj.style.top = y_set1 + "px";
+    line1_obj.style.left = pos1[0] + "px";
+    line1_obj.style.height = h_for_l1 + "px";
+
+    line3_obj.style.borderLeft = "3px dotted "+color;
+    line3_obj.style.position = "absolute";
+    line3_obj.style.top = y_set3 + "px";
+    line3_obj.style.left = pos2[0] + "px";
+    line3_obj.style.height = h_for_l3 + "px";
+    
+    line2_obj.style.borderTop = "2px solid "+color;
+    line2_obj.style.fontSize = "22px";
+    line2_obj.style.fontFamily = "cursive";
+    line2_obj.style.fontWeight = "bold";
+    // line2_obj.style.borderLeft = "2px dashed #fff";
+    // line2_obj.style.borderRight = "2px dashed #fff";
+    line2_obj.style.position = "absolute";
+    line2_obj.style.top = y_label + "px" ;
+    if(left_x!=pos1[0]){//第一个点在第二个点的右方，调整延伸方向
+        line2_obj.style.left = (pos1[0] - min_w) + "px";
+    }else line2_obj.style.left = pos1[0]  + "px";
+    
+    var width_to_take = Math.abs(pos1[0] - pos2[0]);
+    var width_final = min_w;
+    if(width_to_take > min_w){
+        var line2_ex_obj = document.createElement('div');
+        line2_ex_obj.className = 'lines';
+        line2_ex_obj.style.position = "absolute";
+        line2_ex_obj.style.borderTop = "3px solid "+color;
+        line2_ex_obj.style.top = y_label + "px" ;
+        if(left_x!=pos1[0]){//第一个点在第二个点的右方，调整延伸方向
+            line2_ex_obj.style.left = pos2[0] + "px";
+        }else line2_ex_obj.style.left = (left_x + min_w) + "px"; 
+        
+        line2_ex_obj.style.width = (width_to_take - width_final) + "px";
+        line2_ex_obj.style.height = 0 + "px";
+        document.body.appendChild(line2_ex_obj);
+    }
+    line2_obj.style.width = width_final + "px";
+    line2_obj.style.height = 25 + "px";
+    line2_obj.style.background = '#A9A9A9';
+    line2_obj.style.color = '#000';
+    line2_obj.style.zIndex = 999;
+    line2_obj.innerHTML = label;
+    
+    document.body.appendChild(line2_obj);
+    document.body.appendChild(line1_obj);
+    document.body.appendChild(line3_obj);
+    document.body.appendChild(arrow);
+
+}
+function clean_lines(){
+    var lines = document.getElementsByClassName('lines');
+    if(lines.length==0)return;
+    for(var l=lines.length-1;l>=0;l--){
+        lines[l].remove();
+    } 
 }
 function change_cursor_index(next_cursor_index){
     // console.log(cursor_obj.innerHTML);//tmp
@@ -1254,10 +1498,6 @@ function bottom_display(current_char_index){
     selected_obj.innerHTML=lists[cursor_index].innerHTML+" : "+current_char_index+" : "+total_char_index_tmp+" : "+labels_current[current_sample_index][current_char_index];
     var relation_obj=document.getElementById("relation");
     relation_obj.innerHTML="";
-    if(lists[start_end_tmp[0]].Id!=undefined){
-        var relations_tmp=lists[start_end_tmp[0]].Id.split(';');
-        for(var re in relations_tmp)   relation_obj.innerHTML+=re+':'+relations_tmp[re].slice(3)+'&nbsp';
-    }
 }
 function flash(obj){//光标闪烁
     if(obj.style.color=='rgb(218, 165, 32)')obj.style.color='#4a4948';
@@ -1382,12 +1622,13 @@ function text2obj_color(){
                                 // console.log(''+spos_tmp);
                                 // console.log(spos_tmp[i])
                                 // console.log(i1,current_sample_index+i1,page,i,spo,j);
-                                myconsole(spo+' 存在错误，丢弃！');
+                                myconsole(spo+' 存在错误，丢弃！');//output
                                 var sample_index2store=total_char_index_2_relative_index(parseInt(spo[0]))[0];
                                  var exist_index=query_2dlist(all_spos_loaded[sample_index2store],spo);
                                 if(exist_index!=-1){//已经存在             
                                     all_spos_loaded[sample_index2store].splice(exist_index,1);       
-            console.log('已丢弃：'+spo);//dev
+                                    myconsole('已丢弃：'+spo);//output
+                                    refresh();
                                     // console.log(''+spos_tmp);
                                 }
                                 break;
@@ -1454,13 +1695,13 @@ console.log(spo+'',spos_tmp[i]+'');//dev
             if(correction!=0){
                     if(correction==-999){
 // console.log('relative_index='+page_relative_index[1]);//dev
-    console.log('label='+label[page_relative_index[1]]);//dev
-    console.log(spo+' 存在错误！');//dev
-                          var exist_index=query_2dlist(all_spos_loaded[page_relative_index[0]],spo);
-                            if(exist_index!=-1){//已经存在             
-                                all_spos_loaded[page_relative_index[0]].splice(exist_index,1);       
-        console.log('已丢弃：'+spo);//dev
-                            }
+    myconsole(spo+' 存在错误！');//output
+    var exist_index=query_2dlist(all_spos_loaded[page_relative_index[0]],spo);
+    if(exist_index!=-1){//已经存在             
+        all_spos_loaded[page_relative_index[0]].splice(exist_index,1);       
+        myconsole('已丢弃：'+spo);//output
+        refresh();
+    }
                             break;
                     }
                     else{
@@ -1478,9 +1719,14 @@ console.log(all_spos_loaded[current_sample_index][i][j]+'');//dev
           a_object.innerHTML=i;
           a_object.style.fontSize="0.8em";
           a_object.style.backgroundColor=colors[j];
-                if(lists[page_relative_index[1]].Id!=undefined){
-                    lists[page_relative_index[1]].Id+=';'+spo[1];
-                }else lists[page_relative_index[1]].Id=spo[1];
+          var spo_cut = [];
+        spo_cut.push(spo[0]);                
+        spo_cut.push(spo[1].slice(3));
+        spo_cut.push(spo[2]);
+        spo_cut.push(i);
+        if(lists[page_relative_index[1]].Id!=undefined){
+            lists[page_relative_index[1]].Id+=';'+spo_cut.join(',');
+        }else lists[page_relative_index[1]].Id=spo_cut.join(',');
                 // console.log(lists[relative_index].Id);//debug
           testobj.insertBefore(a_object,lists[page_relative_index[1]]);
         }
@@ -1901,11 +2147,12 @@ function find_token_end(index_relative,tokens){
 }
 function extract_tokens(token_start,token_end,page_start,page_end){
     if(page_start==page_end){
-        return all_samples_loaded[page_start].slice(token_start,token_end+1).join('');
+        return all_samples_loaded[page_start].slice(token_start,token_end+1);
     }else{
-// console.log(all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length));//dev
-// console.log(all_samples_loaded[page_start].slice(0,token_end+1));//dev
-        return (all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length)+all_samples_loaded[page_end].slice(0,token_end+1)).join('');
+        // console.log(all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length));//dev
+        // console.log(all_samples_loaded[page_start].slice(0,token_end+1));//dev
+        var token_list = all_samples_loaded[page_start].slice(token_start,all_samples_loaded[page_start].length).concat(all_samples_loaded[page_end].slice(0,token_end+1))
+        return token_list;
     }
 }
 function extract_entity(start_end_tmp,tokens){
