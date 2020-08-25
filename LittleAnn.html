@@ -1439,8 +1439,11 @@ h_for_l1    |                   |  l3
     line2_obj.style.top = y_label + "px" ;
     if(left_x!=pos1[0]){//第一个点在第二个点的右方，调整延伸方向
         line2_obj.style.left = (pos1[0] - min_w) + "px";
-    }else line2_obj.style.left = pos1[0]  + "px";
-    
+        if((pos1[0] - min_w)<50) line2_obj.style.textAlign='right';
+    }else{
+        line2_obj.style.left = pos1[0]  + "px";
+        if(pos1[0]<50) line2_obj.style.textAlign='right';
+    } 
     var width_to_take = Math.abs(pos1[0] - pos2[0]);
     var width_final = min_w;
     if(width_to_take > min_w){
