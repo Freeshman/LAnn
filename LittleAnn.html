@@ -1250,11 +1250,11 @@ function outline_triple(current_char_index){
     var start_end_tmp=start_end_index(current_char_index,labels_current[current_sample_index]);
     // console.log(start_end_tmp);//dev
     if(lists[start_end_tmp[0]].Id!=undefined){
-        
+        var top_y_used_list = [];
         var relations_tmp=lists[start_end_tmp[0]].Id.split(';');
         var pos_x_drawed = [];
-        var offset_h_step = 50;
-        var offset_w_step = 4;
+        var offset_h_step = 40;
+        var offset_w_step = 2;
         for(var re in relations_tmp){
             var spo_tmp = relations_tmp[re].split(',');
 
@@ -1287,9 +1287,9 @@ function outline_triple(current_char_index){
                     // render_rectangle(start_end_index(page_index_tmp[1],labels_current[current_sample_index]),3,style='outset');
                 // }
             }
-            while(pos_x_drawed.indexOf(pos[2])!=-1) pos[2]+=15;//x
-            while(pos_x_drawed.indexOf(pos[0])!=-1) pos[0]+=15;//x
-            draw_line([pos[0],pos[1]],[pos[2],pos[3]], 80 ,h_offset,offset_h_step,geo.height,spo_tmp[3]+':'+spo_tmp[1]);
+            while(pos_x_drawed.indexOf(pos[2])!=-1) pos[2]+=10;//x
+            while(pos_x_drawed.indexOf(pos[0])!=-1) pos[0]+=10;//x
+            top_y_used_list.push(draw_line([pos[0],pos[1]],[pos[2],pos[3]], 60 ,offset_h_step,geo.height,top_y_used_list,spo_tmp[3]+':'+spo_tmp[1]));
             pos_x_drawed.push(pos[2]);
             pos_x_drawed.push(pos[0]);
         }
@@ -1329,8 +1329,15 @@ function create_arrow(direction,color="#f00",left,top){//0-3:up down left right
     }
     return arrow
 }
-function draw_line(pos1,pos2,h1 = 80,offset_h=0,offset_h_step=1,h_obj = 0,label=''){
-    /*
+function draw_line(pos1,pos2,h1 = 60,offset_h_step=1,h_char_obj = 0,top_y_used_list=[],label=''){
+   /*
+     * pos1,pos1: pos1 direct to pos2
+     * h1: default distance between label and char
+     * offset_h_step: for two lines, distance of their label
+     * h_char_obj: height of the char object, used to correcte the location of the label when the line need to be displayed under the char
+     * top_y_used_list: top y used list, to seperate the labels
+     * label: label to display
+     * return this draw_line used top y
             ________l2___________
         l1  pos1_line1          pos2_line2
             |                   | 
@@ -1343,9 +1350,7 @@ h_for_l1    |                   |  l3
         3. top_y = min(pos1.y,pos2.y)
         4. Dont confuse with pos1_in with pos1_line1
     */
-//    console.log('=========================');//dev
-    // console.log(pos1,pos2,h1,offset_h,h_obj);//dev
-    var min_w = 135;
+    var min_w = 20*label.length;
     var line1_obj = document.createElement('div');
     var line2_obj = document.createElement('div');
     var line3_obj = document.createElement('div');
@@ -1383,7 +1388,8 @@ h_for_l1    |                   |  l3
         h_for_l3 = 0;
         situation = 'e2_left';
     }else situation = 'same_page';
-    var top_y = Math.min(pos1[1],pos2[1]) - (h1 + offset_h);//往上移动h1个高度
+    top_y_used_list.push(pos1[1],pos2[1]);
+    var top_y = Math.min.apply(Math,top_y_used_list) - (h1 + 25);//往上移动h1个高度，25px是label自身的高度
     var left_x = Math.min(pos1[0],pos2[0]);
     h_for_l1 = h_for_l1*(pos1[1] - top_y) ;
     h_for_l3 = h_for_l3*(pos2[1] - top_y) ;
@@ -1393,59 +1399,62 @@ h_for_l1    |                   |  l3
 
 
     if(top_y<100){//太靠上了，下方显示，箭头向上
-        offset_h = (parseInt((100-top_y)/offset_h_step))*offset_h_step;//重新转换为向下的偏移量
 
-        if((Math.min(pos1[1],pos2[1])+offset_h+1*h1)<(Math.max(pos1[1],pos2[1]))){//两个实体离得足够远
+        if((Math.min(pos1[1],pos2[1])+2*h1)<(Math.max(pos1[1],pos2[1]))){//两个实体离得足够远
             if(pos1[1]>pos2[1]){//e2 over e1
                 situation +='E2OverE1_uparrow';  
-                var low_y = pos2[1]+1*h1+offset_h; 
+                var low_y = pos2[1]+1*h1; 
             }else{
                 situation +='E1OverE2_downarrow';
-                var low_y = pos1[1]+1*h1+offset_h; 
+                var low_y = pos1[1]+1*h1; 
             }
+            if(top_y_used_list.indexOf(low_y)!=-1) low_y+=30;
+
         }else{
-            var low_y = Math.max(pos1[1],pos2[1]) + h_obj + h1 + offset_h;//obj的下方开始
+            var low_y = Math.max.apply(Math,top_y_used_list) + h_char_obj + h1 ;//obj的下方开始,根据已经用过的top_y_used_list中的low_y自动下移
             // console.log('n= '+parseInt((100-top_y)/offset_h_step),offset_h,low_y);
-            y_set1 = pos1[1] + h_obj;
-            y_set3 = pos2[1] + h_obj;
+            y_set1 = pos1[1] + h_char_obj;
+            y_set3 = pos2[1] + h_char_obj;
             situation +='_uparrow';
         }
         y_label = low_y;
+        top_y = low_y;//low_y returned by top_y
+
     }else{
         situation +='_downarrow';
     }
     // console.log(label+'  '+situation)//dev
     if(situation.indexOf('uparrow')!=-1){
         var arrow = create_arrow(2,color,pos2[0],pos2[1]);
-        var h_for_l1 = low_y - pos1[1] - h_obj; //根据最低的y值和对象y值计算高度
-        var h_for_l3 = low_y - pos2[1] - h_obj;
+        var h_for_l1 = low_y - pos1[1] - h_char_obj; //根据最低的y值和对象y值计算高度
+        var h_for_l3 = low_y - pos2[1] - h_char_obj;
         if(situation.indexOf('e2_right')!=-1){
-            var arrow = create_arrow(3,color,pos2[0],pos2[1]+h_obj+h1+offset_h-6);//right_arrow
+            var arrow = create_arrow(3,color,pos2[0],pos2[1]+h_char_obj+h1-6);//right_arrow
         }
         else if(situation.indexOf('e2_left')!=-1){
-            var arrow = create_arrow(2,color,pos2[0],pos2[1]+h_obj+h1+offset_h-6);//left_arrow
+            var arrow = create_arrow(2,color,pos2[0],pos2[1]+h_char_obj+h1-6);//left_arrow
         }else if(situation.indexOf('E2OverE1')!=-1){
             var h_for_l1 = pos1[1] - low_y; //根据最低的y值和对象y值计算高度
-            var h_for_l3 = low_y - pos2[1] - h_obj;
+            var h_for_l3 = low_y - pos2[1] - h_char_obj;
             y_set1 = low_y ;
-            y_set3 = pos2[1] + h_obj;
+            y_set3 = pos2[1] + h_char_obj;
             line2_obj.style.borderBottom = "3px solid "+color;
 
-            var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_obj);//up_arrow
+            var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_char_obj);//up_arrow
         }else{
-            var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_obj);//up_arrow
+            var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_char_obj);//up_arrow
         }
     }else{
         if(situation.indexOf('e2_right')!=-1){
-            var arrow = create_arrow(3,color,pos2[0],pos2[1]- h1 - offset_h -6);//right_arrow
+            var arrow = create_arrow(3,color,pos2[0],pos2[1]- h1  -6);//right_arrow
         }
         else if(situation.indexOf('e2_left')!=-1){
-            var arrow = create_arrow(2,color,pos2[0],pos2[1]- h1 - offset_h -6);//left_arrow
+            var arrow = create_arrow(2,color,pos2[0],pos2[1]- h1  -6);//left_arrow
         }else if(situation.indexOf('E1OverE2')!=-1){
             // console.log("E1OverE2");//dev
             var h_for_l3 = pos2[1] - low_y; //根据最低的y值和对象y值计算高度
-            var h_for_l1 = low_y - pos1[1] - h_obj;
-            y_set1 = pos1[1] + h_obj;
+            var h_for_l1 = low_y - pos1[1] - h_char_obj;
+            y_set1 = pos1[1] + h_char_obj;
             y_set3 = low_y ;
             line2_obj.style.borderBottom = "3px solid "+color;
 
@@ -1515,6 +1524,7 @@ h_for_l1    |                   |  l3
     document.body.appendChild(line1_obj);
     document.body.appendChild(line3_obj);
     document.body.appendChild(arrow);
+    return top_y;
 
 }
 function clean_lines(){
@@ -1893,7 +1903,7 @@ function save(){
                 alert('l发现问题'+l);
                 return;
             }
-            if(t==undefined){
+            if(t==undefined||t.length==0){
                 alert('t发现问题'+t);
                 return;
             }
@@ -1918,7 +1928,7 @@ function save(){
     }
     //字符 标签 三元组汇总
     for(var i in spo_result){
-                if(cut_save_flag)if(current_sample_index<total_char_index_2_relative_index(parseInt(i))[0]){
+        if(cut_save_flag)if(current_sample_index<total_char_index_2_relative_index(parseInt(i))[0]){
 // console.log(total_char_index_cal(   cursor_index));//dev
           break;
         }
@@ -2406,8 +2416,11 @@ $("#fileImport").click(function () {
 
                 mode=contents[0].trim().split("\t").length;
                 for(i in contents){
-                    contents[i] = contents[i].trim();
-                    if(contents[i].length==0)continue;//空行
+                    var row_tmp = contents[i].trim();
+                    if(row_tmp.length==0&&contents[i]!=' ')//trim后的字符为空了，但是保留纯文本输入时其中的空格
+                            continue;//空行
+                    row_tmp = contents[i]; //contents[i]=' ',纯文本输入，当前字符为空格
+
                     c_l=contents[i].split("\t");
                       // if(c_l.length!=mode){//标注完整性检查
                       //     alert(i+'处标注存在问题！\n'+c_l.length+'!='+mode);
@@ -2443,7 +2456,8 @@ $("#fileImport").click(function () {
                       else l=c_l[1];
 
 
-                    if((c=='_换行符_')&&(tmp.length>400)){
+                  	if(((c=='_换行符_')&&(tmp.length>200))||((tmp.length>600&&('。；;!！'.indexOf(c)!=-1))
+                      )){
                             tmp.push(c);
                             label_tmp.push(l.trim());
                             samples.push(tmp);
