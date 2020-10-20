@@ -2045,6 +2045,8 @@ function add_entity(){
     tokens_2_server=extract_tokens(token_start_tmp,token_end_tmp,current_sample_index,current_sample_index);
     tokesn_2_server_index_s=start_end[0]-token_start_tmp;
     txtselected=txtselected.replace(/&nbsp;/g," ");
+    txtselected=txtselected.replace(/&amp;/g,"&");
+
 // console.log(txtselected);//dev
 // console.log(start_end);//dev
     to_server(true,true,txtselected,tokesn_2_server_index_s,tokesn_2_server_index_s+txtselected.length, tokens_2_server,-1);
