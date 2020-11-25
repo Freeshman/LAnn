@@ -6,7 +6,7 @@
 ## LAnn简介
 ![演示视频](https://github.com/Freeshman/LAnn/blob/master/example.gif)
 LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注工具。具有使用简单的特点，采用网页的形式，使用浏览器便可运行。标注过程、结果直观，易后处理。基本不用配置，快速上手。可只用于NER标注，也可以适当修改，改为POS标注或者分词标注。
-可以导入test.txt、entity_dict和启动软件的辅助标注试一试，[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
+可以先后导入test.txt、entity_dict，然后启动软件的辅助标注试一试，[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体类型
 ![实体类型](https://github.com/Freeshman/LAnn/blob/master/entity_relation_class_config.png)
@@ -61,6 +61,8 @@ LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注
 ***使用前两个域分割后即为NER数据集。***
 ## 辅助标注
 ### 初期-纯前端
+在标注初期，LAnn标注工具会记录实体类型标注为词典，新的实体会根据编辑距离最小的、记录过的实体标签进行判断；同时在勾选辅助序列标注选项后，会根据词典匹配进行预标注。
+在保存时，会保存标注好的文件和记录的词典；导出的词典也可以重新导入。
 ### Django后台辅助标注
 LAnnBack为后台辅助标记部分，可支持实体分类模型、序列标注模型和关系分类模型。
 **前段：**
