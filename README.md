@@ -1,12 +1,12 @@
 # LAnn标注工具
 ## 当前分支
 - 目前为封闭域关系三元组标注，不提供新关系的标注，之前开放域关系三元组版本将不再维护，不再维护，不再维护，存在BUG！存在BUG！存在BUG！。
+- 在大文本标注中，保存后会出现三元组指标错乱，正在复现、调试中，推荐小文本进行标注
 - 计划脱离对Django框架的依赖，借助PyQt的WebEngine实现标注界面和Python程序数据传输，更好地支持Pytorch和数据处理，已基本打通JS和Python之间的墙壁。
 ## LAnn简介
 ![演示视频](https://github.com/Freeshman/LAnn/blob/master/example.gif)
 LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注工具。具有使用简单的特点，采用网页的形式，使用浏览器便可运行。标注过程、结果直观，易后处理。基本不用配置，快速上手。可只用于NER标注，也可以适当修改，改为POS标注或者分词标注。
-
-[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
+可以导入test.txt、entity_dict和启动软件的辅助标注试一试，[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体类型
 ![实体类型](https://github.com/Freeshman/LAnn/blob/master/entity_relation_class_config.png)
@@ -79,9 +79,10 @@ LAn2NER.py文件用于将标注过的.lann文件转换为数据集，使用前�
 ## TODO
 
 - [x] 三元组的编辑
-- [-] 整合分词
+- [-] 整合分词（统一字符形式）
 - [x] 智能算法辅助标注
-- [-] 翻译为英文版
+- [ ] BERT预训练模型在线训练
+- [-] 翻译为英文版（貌似没这个必要）
 - [x] 添加VIM模式
 - [ ] 更优美的三元组显示方式
-- [ ] 语料标注质量提升
+- [ ] 加入语料标注质量分析、提升功能
