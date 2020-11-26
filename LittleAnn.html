@@ -255,14 +255,12 @@ input,button{
     </div>
     <div id="entity_type" class="white_content">
       <p id="given_by_server_e"></p>
-      <ul>
-        <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_地理位置')">0:实体_地理位置</button></li>
-        <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_日期时间')">1:实体_日期时间</button></li>
-        <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_人名')">2:实体_人名</button></li>
-        <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_公司名')">3:实体_公司名</button></li>
-        <li><button style="background:#4581B3;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
-        <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="type_choose_close()">n:取消</button></li>
-      </ul>
+      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_地理位置')">0:实体_地理位置</button></li>
+      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_日期时间')">1:实体_日期时间</button></li>
+      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_人名')">2:实体_人名</button></li>
+      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_公司名')">3:实体_公司名</button></li>
+      <li><button style="background:#4581B3;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
+      <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="type_choose_close()">n:取消</button></li>
       <!-- <a href="javascript:void(0)" onclick="type_choose_close()">取消</a> -->
     </div>
     <div id="relation_type" class="white_content">
@@ -274,7 +272,6 @@ input,button{
         <li><button style="background:#228B22;float: left;padding: 0.5em" onclick="set_type('关系_聘用')">3:关系_聘用</button></li>
         <li><button style="background:#218a21;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
         <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="spo_global=[];type_choose_close()">n:取消</button></li>
-
 
       </ul>
 
@@ -309,6 +306,7 @@ input,button{
     var spo_need_display = [];
 
     var entity_diction = new Array();
+    var relation_diction = new Array();
     var server_usable = 0;
     var spo_global=[];//存储全局spo，采用绝对索引值
     var sp_lock=[];
@@ -400,6 +398,7 @@ window.onresize = function(){
     adjust_position();
     refresh();
 }
+// qt = null;
 run_mode = 'qt';
 document.addEventListener("DOMContentLoaded", function () {
         adjust_position();
@@ -411,7 +410,7 @@ document.addEventListener("DOMContentLoaded", function () {
          catch(err){
         run_mode = 'web';
          }
-        // myconsole('run_mode=',run_mode);//dev
+        myconsole('run_mode=',run_mode);
     });
 function adjust_position(){
     document.getElementById("CurrentContent").style.width=(window.innerWidth-350)+'px';
@@ -423,7 +422,8 @@ function debug(){
     var tmp=eval(number_input);
     if(tmp==0) myconsole('spo_global=',spo_global);
     if(tmp==1) myconsole('all_spos_loaded[current_page_index]=',all_spos_loaded[current_page_index]);
-    if(tmp==2) myconsole('entity_diction=',entity_diction);
+    if(tmp==2) myconsole('entity_diction=',entity_diction.length);
+    if(tmp==3) myconsole('server_usable',server_usable);
     number_record('clean');
 }
 function cursor_position_prediction(tokens,last_char_index,next_char_index){
@@ -458,11 +458,11 @@ function set_spos_from_server(spos){
     for(var j in prediction){
         let spo_tmp = prediction[j];
         let page_start = parseInt(all_spos_loaded[current_page_index][0][0]);
-        // myconsole(page_start);
+        myconsole(page_start);
         spo_tmp[0] = parseInt(spo_tmp[0])+page_start+"";
         spo_tmp[2] = parseInt(spo_tmp[2])+page_start+"";
         if(query_2dlist(all_spos_loaded[current_page_index],spo_global)==-1)        all_spos_loaded[current_page_index].push(spo_tmp);
-        // myconsole(spo_tmp);
+        myconsole(spo_tmp);
     }
 }
 function seq_labing_to_server(seqlab_flag,sample){
@@ -585,11 +585,10 @@ function set_type_tradition(entity,label,start_end_in){
         labels_current[current_page_index][j]='I_'+type;
     }
     cursor_index=end_char_index;
-    if(type.indexOf('实体')!=-1) count_new_entity+=1;
 }
 function set_type(type_){
         // myconsole(spo_global);//dev
-        // myconsole(type_)//dev
+        myconsole(type_)
 //  myconsole('设置type进入');//dev
  // myconsole(implicit_relation_flag);//dev
   type=type_;
@@ -604,7 +603,7 @@ function set_type(type_){
         // myconsole(''+spo_global);
 
     if(spo_global.length!=2){
-        document.getElementById('console').value+='\nError!';
+        myconsole('Error!');
         type_choose_close();
         return;
     }
@@ -613,12 +612,19 @@ function set_type(type_){
     spo_global[0]=e1;
     spo_global[1]=type;
     spo_global.push(e2);
-    if(type!=""&type_given_server!='服务器不可用'){
+    if(type!=""&server_usable==1){//如果服务器可用，发送新样本给服务器
+
+    // if(type!=""&type_given_server!='服务器不可用'){
     // if(type!=""&type!=type_given_server){
         // myconsole('手动选择，发给服务器');
         var exist_index=query_2dlist(all_spos_loaded[total_char_index_2_relative_index(parseInt(spo_global[0]))[0]],spo_global);
         if(exist_index!=-1)  server_triple_relation_classfy(triple_relation_classfy_list,type,'delete');
         else server_triple_relation_classfy(triple_relation_classfy_list,type,'add');
+    }else{
+        var tp = triple_relation_classfy_list;
+        var triple_relation_classfy_list_tmp = ['#',tp[0],tp[1],tp[4],tp[5],tp[8].join('')];
+        myconsole(triple_relation_classfy_list_tmp.join('  '));
+        relation_diction[triple_relation_classfy_list_tmp.join('  ')] = type;
     }
     save_spo();
     // myconsole('关闭关系类型选择框');//debug
@@ -640,7 +646,7 @@ function set_type(type_){
       if(end_char_index!=-1&&end_char!=txtselected[txtselected.length-1]){//点击结束位置修正
           end_char_index+=(txtselected.length-txtselected.indexOf(end_char));
       }
-    //   myconsole(current_char_index+" "+end_char_index);//dev
+      myconsole(current_char_index+" "+end_char_index);
       var start_end_tmp=start_end_index(current_char_index,labels_current[current_page_index]);//当前选中的文本之前的文本是否有标签？
 
       var label_origin=labels_current[current_page_index][start_end_tmp[0]];
@@ -725,7 +731,7 @@ function set_type(type_){
   refresh();
 }
 function save_spo(){
-            // myconsole(''+spo_global);//dev
+            myconsole(''+spo_global);//dev
             //得出实际存储位置的索引值 start
             var page_index2store=total_char_index_2_relative_index(spo_global[0])[0];
            //判断是否为从前一页面开始的三元组，得出实际存储位置的索引值 end     
@@ -753,7 +759,7 @@ function save_spo(){
 //                myconsole(location,sample_overlap_index,spo_global);//dev
                 var exist_index_other_page=query_2dlist(all_spos_loaded[sample_overlap_index],spo_global);
                 if(exist_index==-1&&exist_index_other_page==-1){//没有存储过的三元组
-                    // myconsole('添加新的三元组=',spo_global);//dev
+                    myconsole('添加新的三元组=',spo_global);//dev
                     all_spos_loaded[sample_overlap_index].push(spo_global);
                 }else if(exist_index!=-1&&exist_index_other_page!=-1){//储存过的三元组，进行删除
 //                  myconsole(sample_overlap_index+' 删除三元组:'+spo_global+':'+exist_index_other_page);//dev
@@ -900,7 +906,7 @@ function minDistance(s1, s2) {
 // minDistance('jary','jerry') // 2
 function selecte(){
     if(state=='choosing'){
-        // myconsole("使用服务器的结果",type_given_server);//dev
+        myconsole("使用服务器的结果",type_given_server);//dev
         set_type(type_given_server);
         type_given_server="";
         return;
@@ -1087,7 +1093,7 @@ function delete_char(){
     let total_char_index_tmp=total_char_index_cal(current_char_index);
     let char_2_delete = lists[current_char_index].innerHTML;
     let sententce = all_samples_loaded[current_page_index];
-    // myconsole('删除'+char_2_delete);//dev
+    myconsole('删除'+char_2_delete);
     document.getElementById('insert_input').value = char_2_delete;
     char_2_delete = char_2_delete=='\n'? '_换行符_':char_2_delete;//界面显示和存储转换
     back_chars = [];
@@ -2239,11 +2245,16 @@ function save(){
     }else{
         var blob = new Blob([results.join('\n')], {type: "text/plain;charset=utf-8"});
         saveAs(blob,filename_2_save);
+        var diction_2_save = [];
         if(Object.keys(entity_diction).length>0){
-            var diction_2_save = [];
             for(entity in entity_diction) diction_2_save.push(entity+'\t'+entity_diction[entity]);
+        }
+        if(Object.keys(relation_diction).length>0){
+            for(relation in relation_diction) diction_2_save.push(relation+'\t'+relation_diction[relation]);
+        }
+        if(diction_2_save.length>0){
             var blob = new Blob([diction_2_save.join('\n')], {type: "text/plain;charset=utf-8"});
-            saveAs(blob,'entity_diction.dic');
+            saveAs(blob,'diction.dic');
         }
     }
 }
@@ -2728,10 +2739,15 @@ function import_diction(content){
     content = content.split("\n");
     try {
         for(l in content){
-            entity_label = content[l].split('\t');
-            entity_diction[entity_label[0]] = entity_label[1];
+            var obj_label = content[l].split('\t');
+            if(content[l][0]=='#'){
+                relation_diction[obj_label[0]] = obj_label[1];
+            }else{
+                entity_diction[obj_label[0]] = obj_label[1];
+            }
         }
-        myconsole('导入',Object.keys(entity_diction).length,'个样本');
+        myconsole('导入',Object.keys(entity_diction).length,'个实体词条');
+        myconsole('导入',Object.keys(relation_diction).length,'个关系词条');
     } catch (error) {
         alert('字典文件格式不支持！');
     }
