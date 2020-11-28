@@ -162,13 +162,13 @@ function seq_label_local(sample_tmp,entity_diction){
   for(var entity in entity_diction){
     // myconsole('检查',entity);
     var start_p = -1;
-    var n = 10;
+    var n = 510;
     while(n>0){
       n--;
       var target_p = sample_tmp.indexOf(entity,start_p+1);
       if(target_p==-1)break;
       else{
-        // myconsole('标注',entity,start_p,target_p);
+        // myconsole('标注',entity,start_p,target_p,entity_diction[entity].indexOf('\r'));
         set_type_tradition(entity,entity_diction[entity],[target_p,target_p+entity.length]);
         start_p = target_p;
       }
