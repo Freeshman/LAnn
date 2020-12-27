@@ -1,4 +1,4 @@
-function server_triple_relation_classfy_django(triple_relation_classfy_list,label,add_delete='add'){
+function server_triple_relation_classfy_django(triple_relation_classfy_list,label,add_delete){
 //  console.log(seqlab_flag,sample);//dev
   $.ajax({
         url:'http://255.255.255.255/triple_relation_classfy/',//目的php文件
@@ -10,9 +10,11 @@ function server_triple_relation_classfy_django(triple_relation_classfy_list,labe
         dataType:'json',//数据传输的格式是json
         success:function(response){
           //数据给后端php文件并成功返回
-          console.log(response);//打印返回的值 //dev
-          if(label==-1){//没有给定label，服务器预测；否则直接上传到服务器上去
-                
+          // console.log(response);//打印返回的值 //dev
+          if(add_delete=='query'){
+                //query:查询模式，服务器预测；
+                //add:  添加模式，直接上传到服务器上去；
+                //delete：删除模式，删除指定的三元组相关数据。
                 type_choose(false,response['result']);//服务器预测类别后进入选择窗口；如果添加新样本，不显示选择窗口
                 // console.log('server.js 打开type_choose');
                 // type_choose(false,{"预测值":"服务器不可用","可信度":"0"});
@@ -21,15 +23,25 @@ function server_triple_relation_classfy_django(triple_relation_classfy_list,labe
             // set_labels(response['result']);
         },
         error:function(xhr,state,errorThrown){
-          if(add_delete=='add'){
-              var relation_label_local = '服务器不可用';
-              var probability = 0;
-              if(Object.keys(relation_diction).length>1){
-                var tmp = relation_classfy_local(triple_relation_classfy_list,relation_diction);
-                relation_label_local = tmp[0];
-                probability = tmp[1];
-              }
-              type_choose(false,{"预测值":relation_label_local,"可信度":probability});
+          // myconsole('server.js',add_delete);//dev
+          var tp = triple_relation_classfy_list;
+          var triple_relation_classfy_list_tmp = ['#',tp[0],tp[1],tp[4],tp[5],tp[8].join('')];
+          if(add_delete=='query'){
+            var relation_label_local = '服务器不可用';
+            var probability = 0;
+            if(Object.keys(relation_diction).length>1){
+              var tmp = relation_classfy_local(triple_relation_classfy_list,relation_diction);
+              relation_label_local = tmp[0];
+              probability = tmp[1];
+            }
+            type_choose(false,{"预测值":relation_label_local,"可信度":probability});
+          }else if(add_delete=='add'){
+              // myconsole('从字典中添加'+label);//dev
+              relation_diction[triple_relation_classfy_list_tmp.join('  ')] = label;
+          }else if(add_delete=='delete'){
+              // myconsole('从字典中删除'+label);//dev
+              var tmp = triple_relation_classfy_list_tmp.join('  ');
+              if(tmp in relation_diction)delete relation_diction[tmp];
             } 
         }
 })
@@ -65,7 +77,7 @@ function seq_labing_to_server_django(seqlab_flag,sample){
         			}
 })
 }
-function to_server_django(server_usable,entity,sample,index_s,index_e,tokens,label,add_delete='add'){
+function to_server_django(entity,sample,index_s,index_e,tokens,label,add_delete){
 //    console.log(sample,label); //dev
     $.ajax({
           url:'http://255.255.255.255/pr/',//目的php文件
@@ -78,8 +90,7 @@ function to_server_django(server_usable,entity,sample,index_s,index_e,tokens,lab
           //数据给后端php文件并成功返回
           //    console.log(response);//打印返回的值 //dev
           //实体类型选择
-          server_usable = 1;
-            if(label==-1){
+            if(add_delete=='query'){
               type_choose(entity,response['result']);//服务器预测类别后进入选择窗口；如果添加新样本，不显示选择窗口
             }
             // return response['result'];
@@ -87,18 +98,23 @@ function to_server_django(server_usable,entity,sample,index_s,index_e,tokens,lab
             // init_entities_list=eval(response);
           },
           error:function(xhr,state,errorThrown){
-            server_usable = 0;//判断服务器是否在线，不在线的情况下使用传统方法预测，同时通知后续子函数不要再发送该样本
+            // myconsole('server.js',add_delete,sample,label);//dev
             var probability = 0;
             var label_predicted_local = "服务器不可用";
-            if(add_delete=='delete')return;
-            if(Object.keys(entity_diction).length>2){
-              var tmp = entity_classfy_local(sample,entity_diction);
-              label_predicted_local = tmp[0];
-              probability = tmp[1];
+            if(add_delete=='query'){
+              if(Object.keys(entity_diction).length>2){
+                var tmp = entity_classfy_local(sample,entity_diction);
+                label_predicted_local = tmp[0];
+                probability = tmp[1];
+              }
+              // myconsole('label_predicted_local',label_predicted_local);
+              type_choose(entity,{"预测值":label_predicted_local,"可信度":probability});
+            }else if(add_delete=='delete'){
+              if(sample in entity_diction) delete entity_diction[sample];
+            }else if(add_delete=='add'){
+              entity_diction[sample] = label;
             }
-            // myconsole('label_predicted_local',label_predicted_local);
-            type_choose(entity,{"预测值":label_predicted_local,"可信度":probability});
-            }
+          }
 })
 }
 function entity_classfy_local(sample,entity_diction){

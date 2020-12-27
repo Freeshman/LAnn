@@ -243,7 +243,8 @@ input,button{
                     <p id="indicator" style="background:gray;">未选中</p>
                 </li>
                 <li>
-                    <button style="background:#008B8B;float: left;" onclick="save()">保存</button>
+                    <button style="background:#008B8B;float: left;width:45%" onclick="save_dict()">保存词条</button>
+                    <button style="background:#008B8B;float: left;width:45%" onclick="save()">保存语料</button>
                 </li>
                 <li>
                     <textarea id="console" rows="10" cols="30" style="width: 100%;height:20% ;">终端信息：</textarea>
@@ -424,8 +425,8 @@ function debug(){
     var tmp=eval(number_input);
     if(tmp==0) myconsole('spo_global=',spo_global);//output
     if(tmp==1) myconsole('all_spos_loaded[current_page_index]=',all_spos_loaded[current_page_index]);//output
-    if(tmp==2) myconsole('entity_diction=',entity_diction.length);//output
-    if(tmp==3) myconsole('server_usable',server_usable);//output
+    if(tmp==2) myconsole('entity_diction length=',Object.keys(entity_diction).length);
+    if(tmp==3) myconsole('relation_diction length=',Object.keys(relation_diction).length);
     number_record('clean');
 }
 function cursor_position_prediction(tokens,last_char_index,next_char_index){
@@ -436,8 +437,8 @@ function cursor_position_prediction(tokens,last_char_index,next_char_index){
        return;
     });
 }
-function server_triple_relation_classfy(triple_relation_classfy_list,label,add_delete='add'){
-    if(run_mode!='qt') server_triple_relation_classfy_django(triple_relation_classfy_list,label,add_delete='add');
+function server_triple_relation_classfy(triple_relation_classfy_list,label,add_delete){
+    if(run_mode!='qt') server_triple_relation_classfy_django(triple_relation_classfy_list,label,add_delete);
     else{
         var data = {"sample":triple_relation_classfy_list,'label':label,'add_delete':add_delete};
         data = JSON.stringify(data);
@@ -476,15 +477,31 @@ function seq_labing_to_server(seqlab_flag,sample){
         });
     }
 }
-function to_server(server_usable,entity,sample,index_s,index_e,tokens,label,add_delete='add'){
-    if(run_mode!='qt') to_server_django(server_usable,entity,sample,index_s,index_e,tokens,label,add_delete);
+function to_server(entity,sample,index_s,index_e,tokens,label,add_delete){
+    if(run_mode!='qt') to_server_django(entity,sample,index_s,index_e,tokens,label,add_delete);
     else{
         var data = {"sample":sample,"index_s":index_s,"index_e":index_e,"tokens":tokens,"label":label,'add_delete':add_delete};//传输的数据
         data = JSON.stringify(data)
         pyjs.entity_classfy(data,function(y){
             y = JSON.parse(y);
-            if(label==-1){
-              type_choose(entity,y['result']);//服务器预测类别后进入选择窗口；如果添加新样本，不显示选择窗口
+            if(label!=-1){//标注了新的实体，在当前页面根据匹配进行序列标注，然后直接返回
+                return;
+            }
+            if(Object.keys(entity_diction).length<10){//50个样本内使用传统的编辑距离预测
+                var label_predicted_ed = "服务器不可用";
+                var probability = 0;
+                if(Object.keys(entity_diction).length>2){
+                    var tmp = entity_classfy_local(sample,entity_diction);
+                    label_predicted_ed = tmp[0];
+                    probability = tmp[1];
+                }
+                // myconsole('label_predicted_local',label_predicted_local);
+                type_choose(entity,{"预测值":label_predicted_ed,"可信度":'ED: '+probability});
+            }else{
+                entity_classfy_mode = 'remote';
+                var label_predicted_deep = y['result']["预测值"];
+                var probability = 'DL: '+ y['result']["可信度"];
+                type_choose(entity,{"预测值":label_predicted_deep,"可信度":probability});//服务器预测类别后进入选择窗口；如果添加新样本label!=-1，不显示选择窗口
             }
         });
     }
@@ -596,7 +613,7 @@ function set_type(type_){
     spo_global[0]=e1;
     spo_global[1]=type;
     spo_global.push(e2);
-    if(type!=""&server_usable==1){//如果服务器可用，发送新样本给服务器
+    if(type!=""&&type_given_server!='服务器不可用'){//如果服务器可用，发送新样本给服务器
 
     // if(type!=""&type_given_server!='服务器不可用'){
     // if(type!=""&type!=type_given_server){
@@ -677,19 +694,16 @@ function set_type(type_){
   type_choose_close();
     // if(type!=""&type_given_server!='服务器不可用'&(type!=type_given_server)||(type!=label_origin)){
     // if(type!=""&type_given_server!='服务器不可用'){
-    if(server_usable==1){//如果服务器可用，发送新样本给服务器
-        // to_server(true,true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type_given_server,'delete');
-        if(label_origin.length!=0)  {
-            to_server(true,true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,label_origin,'delete');
-            myconsole('删除原有标签的');//output
-            myconsole(sample_x);//output
-            myconsole(label_origin);//output
-        }
-        to_server(true,true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type);
-        // to_server(true,true,sample_x,tokens_2_server,type);
-    }else{//否则添加样本到局部字典中
-        entity_diction[sample_x] = type_;
+        // to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type_given_server,'delete');
+    if(label_origin.length!=0)  {
+        to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,label_origin,'delete');
+        myconsole('删除原有标签的');//output
+        myconsole(sample_x);//output
+        myconsole(label_origin);//output
     }
+    to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type,'add');
+    // to_server(true,sample_x,tokens_2_server,type);
+
     if(seq_lab_mode=='local'&&seqlab_flag){
         // myconsole('当前页面即时更新序列标注！');//devs
         var sample_tmp = [];
@@ -2091,17 +2105,29 @@ function save(){
     }else{
         var blob = new Blob([results.join('\n')], {type: "text/plain;charset=utf-8"});
         saveAs(blob,filename_2_save);
-        var diction_2_save = [];
-        if(Object.keys(entity_diction).length>0){
-            for(entity in entity_diction) diction_2_save.push(entity+'\t'+entity_diction[entity]);
-        }
-        if(Object.keys(relation_diction).length>0){
-            for(relation in relation_diction) diction_2_save.push(relation+'\t'+relation_diction[relation]);
-        }
-        if(diction_2_save.length>0){
+    }
+}
+function save_dict(){
+    var diction_2_save = [];
+    if(Object.keys(entity_diction).length>0){
+        for(entity in entity_diction) diction_2_save.push(entity+'\t'+entity_diction[entity]);
+    }
+    if(Object.keys(relation_diction).length>0){
+        for(relation in relation_diction) diction_2_save.push(relation+'\t'+relation_diction[relation]);
+    }
+    if(diction_2_save.length>0){
+        myconsole('共保存'+diction_2_save.length+'个词条!');
+        if(run_mode=='qt'){
+            var data={'filename':'obj.dic','data':diction_2_save}        
+            data = JSON.stringify(data)
+            pyjs.save_dict(data,function(y){
+                alert('成功保存为: '+y);
+            });
+        }else{
             var blob = new Blob([diction_2_save.join('\n')], {type: "text/plain;charset=utf-8"});
             saveAs(blob,'diction.dic');
         }
+
     }
 }
 function indicator(on_off,message='未选中',icon_index=0){
@@ -2222,7 +2248,7 @@ function add_entity(){
     if(last_char_index_queue[1]>start_end[0])  var last_char_index = last_char_index_queue[0];//判断是否有回跳操作
     else var last_char_index = last_char_index_queue[1];
     // cursor_position_prediction(all_samples_loaded[current_page_index],last_char_index,start_end[0]);
-    to_server(true,true,txtselected,tokesn_2_server_index_s,tokesn_2_server_index_s+txtselected.length, tokens_2_server,-1);
+    to_server(true,txtselected,tokesn_2_server_index_s,tokesn_2_server_index_s+txtselected.length, tokens_2_server,-1,'query');
     last_char_index_queue.push(cursor_index);
     last_char_index_queue.shift();
 }
@@ -2242,8 +2268,7 @@ function cancle(){
         var token_end_tmp=find_token_end(start_end[1],all_samples_loaded[current_page_index]);
       tokens_2_server=extract_tokens(token_start_tmp,token_end_tmp,current_page_index,current_page_index);
       tokesn_2_server_index_s=start_end[0]-token_start_tmp;
-      if(entity in entity_diction)  delete entity_diction[entity];
-       to_server(true,true,txtselected,tokesn_2_server_index_s,tokesn_2_server_index_s+txtselected.length, tokens_2_server,entity_class,'delete');
+      to_server(true,entity,tokesn_2_server_index_s,tokesn_2_server_index_s+txtselected.length, tokens_2_server,entity_class,'delete');
     }
     if(txtselected!=""){
         all_labels_loaded[current_page_index][current_char_index]='O';
@@ -2341,7 +2366,7 @@ function spo_record(start_end_tmp){
             // type_e1
             // e2
             // type_e2
-            server_triple_relation_classfy(triple_relation_classfy_list,-1);
+            server_triple_relation_classfy(triple_relation_classfy_list,-1,'query');
             // type_choose(false,{"预测值":"服务器不可用","可信度":"0"});//直接选择两个实体之间的关系
         // }else indicator('on','选中');
     }//#########
