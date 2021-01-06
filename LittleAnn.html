@@ -18,12 +18,7 @@ body {
     height: 100%;
 }
 span{
-    margin-top: 2em;
-    padding-left: 0.1em;
-    height: 21px;
     word-break: break-all;
-    /*float: left;*/
-    /*width: 20px;*/
 }
 .black_overlay{ display: none; position: fixed; top: 0%; left: 0%; width: 100%; height: 100%; background-color: black; z-index:1001; -moz-opacity: 0.6; opacity:.60; filter: alpha(opacity=60); }
 
@@ -72,6 +67,7 @@ span{
 }
 #CurrentContent{
     /*width: 85%;*/
+    line-height: 27px;
 	font-size: 21px;
     margin-left: 0.2em;
     margin-top: 85px;
@@ -1488,17 +1484,21 @@ h_for_l1    |                   |  l3
         3. top_y = min(pos1.y,pos2.y)
         4. Dont confuse with pos1_in with pos1_line1
     */
-    var min_w = 20*label.length;
+    // myconsole('=========================');//dev
+    // myconsole(pos1,pos2,h1,offset_h_step,h_char_obj);//dev
+    // myconsole('top_y_used_list=',top_y_used_list);//dev
+    var min_w = 16*label.length;
     var line1_obj = document.createElement('div');
-    var line2_obj = document.createElement('div');
+    var line_label_obj = document.createElement('div');
     var line3_obj = document.createElement('div');
     line1_obj.className = 'lines';
-    line2_obj.className = 'lines';
+    line_label_obj.className = 'lines';
     line3_obj.className = 'lines';
 
     var color = '#d';
     var str = "0123456789abcdef";
     for(var i=0;i<2;i++) color+=str.charAt(Math.ceil(Math.random()*(str.length-1)));
+    // myconsole(color);//dev
     var h_for_l1 = 1;
     var h_for_l3 = 1;
 
@@ -1515,19 +1515,22 @@ h_for_l1    |                   |  l3
         situation = 'e2_right';
         
     }else if(pos1[0]<0){//e1_left
-        pos1[1] = pos2[1];
-        pos1[0] = pos2[0] - 150;
+        pos1[1] = pos2[1] ;
+        pos2[0] += 0.5*h_char_obj;
+        pos1[0] = pos2[0] - 100  ;
         h_for_l1 = 0;
         situation = 'e1_left';
     }else if(pos2[0]<0){//e2_left
-        pos2[1] = pos1[1];
-        pos2[0] = pos1[0] - 150;
+        pos2[1] = pos1[1] ;
+        pos1[0] += 0.5*h_char_obj;
+        pos2[0] = pos1[0] - 100 ;
         h_for_l3 = 0;
         situation = 'e2_left';
     }else situation = 'same_page';
     // top_y_used_list.push(pos1[1],pos1[1]+h_char_obj,pos2[1],pos2[1]+h_char_obj);
     top_y_used_list.push(pos1[1],pos2[1]);
     var top_y = Math.min.apply(Math,top_y_used_list) - (h1 + 25);//往上移动h1个高度，25px是label自身的高度
+    // myconsole(top_y_used_list,top_y);//dev
     var left_x = Math.min(pos1[0],pos2[0]);
     h_for_l1 = h_for_l1*(pos1[1] - top_y) ;
     h_for_l3 = h_for_l3*(pos2[1] - top_y) ;
@@ -1537,6 +1540,7 @@ h_for_l1    |                   |  l3
 
 
     if(top_y<100){//太靠上了，下方显示，箭头向上
+        // myconsole('1579 offset_h',offset_h,'top_y=',top_y);
         if((Math.min(pos1[1],pos2[1])+2*h1)<(Math.max(pos1[1],pos2[1]))){//两个实体离得足够远
             if(pos1[1]>pos2[1]){//e2 over e1
                 situation +='E2OverE1_uparrow';  
@@ -1550,6 +1554,7 @@ h_for_l1    |                   |  l3
             // var low_y = Math.max.apply(Math,top_y_used_list) + h_char_obj + h1 + offset_h;//obj的下方开始
             var low_y = Math.max.apply(Math,top_y_used_list) + h_char_obj + h1 ;//obj的下方开始,根据已经用过的top_y_used_list中的low_y自动下移
             // myconsole('1592 low_y=',low_y)
+            // myconsole('n= '+parseInt((100-top_y)/offset_h_step),offset_h,low_y);
             y_set1 = pos1[1] + h_char_obj;
             y_set3 = pos2[1] + h_char_obj;
             situation +='_uparrow';
@@ -1561,6 +1566,7 @@ h_for_l1    |                   |  l3
         // offset_h = 0;
     }
 
+    // myconsole(label+'  '+situation)//dev
     if(situation.indexOf('uparrow')!=-1){
         var arrow = create_arrow(2,color,pos2[0],pos2[1]);
         var h_for_l1 = low_y - pos1[1] - h_char_obj; //根据最低的y值和对象y值计算高度
@@ -1575,7 +1581,7 @@ h_for_l1    |                   |  l3
             var h_for_l3 = low_y - pos2[1] - h_char_obj;
             y_set1 = low_y ;
             y_set3 = pos2[1] + h_char_obj;
-            line2_obj.style.borderBottom = "3px solid "+color;
+            line_label_obj.style.borderBottom = "3px solid "+color;
 
             var arrow = create_arrow(0,color,pos2[0],pos2[1]+h_char_obj);//up_arrow
         }else{
@@ -1584,16 +1590,20 @@ h_for_l1    |                   |  l3
     }else{
 
         if(situation.indexOf('e2_right')!=-1){
-            var arrow = create_arrow(3,color,pos2[0],pos2[1]- h1  -6);//right_arrow
+            var arrow = create_arrow(3,color,pos2[0],y_set1 -6);//right_arrow
+            // y_set1: 与头实体的高度对齐
+            // 6px:  height of right arraw central line
+            // myconsole(pos2[1], h1 , offset_h);
         }
         else if(situation.indexOf('e2_left')!=-1){
-            var arrow = create_arrow(2,color,pos2[0],pos2[1]- h1  -6);//left_arrow
+            var arrow = create_arrow(2,color,pos2[0],y_set1 -6);//left_arrow
         }else if(situation.indexOf('E1OverE2')!=-1){
+            // myconsole("E1OverE2");//dev
             var h_for_l3 = pos2[1] - low_y; //根据最低的y值和对象y值计算高度
             var h_for_l1 = low_y - pos1[1] - h_char_obj;
             y_set1 = pos1[1] + h_char_obj;
             y_set3 = low_y ;
-            // line2_obj.style.borderBottom = "3px solid "+color;
+            // line_label_obj.style.borderBottom = "3px solid "+color;
 
             var arrow = create_arrow(1,color,pos2[0],pos2[1]-15);//减去箭头自身的高度//same_page_down_arrow
         }
@@ -1603,6 +1613,8 @@ h_for_l1    |                   |  l3
     }
     if(situation.indexOf('e1_')!=-1)         h_for_l1 = 0;
     if(situation.indexOf('e2_')!=-1)         h_for_l3 = 0;
+    // myconsole(h_for_l1,h_for_l3);//dev
+    // myconsole(y_set1,h_for_l1,y_set3,h_for_l3,y_label);//dev
 
     
     line1_obj.style.borderLeft = "3px dotted "+color;
@@ -1617,26 +1629,26 @@ h_for_l1    |                   |  l3
     line3_obj.style.left = pos2[0] + "px";
     line3_obj.style.height = h_for_l3 + "px";
     
-    line2_obj.style.borderTop = "3px solid "+color;
-    line2_obj.style.borderBottom = "3px solid "+color;
+    line_label_obj.style.borderTop = "3px solid "+color;
+    line_label_obj.style.borderBottom = "3px solid "+color;
 
-    line2_obj.style.fontSize = "22px";
-    line2_obj.style.fontFamily = "cursive";
-    line2_obj.style.fontWeight = "bold";
-    // line2_obj.style.borderLeft = "2px dashed #fff";
-    // line2_obj.style.borderRight = "2px dashed #fff";
-    line2_obj.style.position = "absolute";
-    line2_obj.style.top = y_label + "px" ;
+    line_label_obj.style.fontSize = "19px";
+    line_label_obj.style.fontFamily = "cursive";
+    line_label_obj.style.fontWeight = "bold";
+    // line_label_obj.style.borderLeft = "2px dashed #fff";
+    // line_label_obj.style.borderRight = "2px dashed #fff";
+    line_label_obj.style.position = "absolute";
+    line_label_obj.style.top = y_label + "px" ;
     if(left_x!=pos1[0]){//第一个点在第二个点的右方，调整延伸方向
-        line2_obj.style.left = (pos1[0] - min_w) + "px";
-        if((pos1[0] - min_w)<50) line2_obj.style.textAlign='right';
+        line_label_obj.style.left = (pos1[0] - min_w) + "px";
+        if((pos1[0] - min_w)<50) line_label_obj.style.textAlign='right';
     }else{
-        line2_obj.style.left = pos1[0]  + "px";
-        if(pos1[0]<50) line2_obj.style.textAlign='right';
+        line_label_obj.style.left = pos1[0]  + "px";
+        if(pos1[0]<50) line_label_obj.style.textAlign='right';
     } 
     var width_to_take = Math.abs(pos1[0] - pos2[0]);
     var width_final = min_w;
-    if(width_to_take > min_w){
+    if(width_to_take > min_w){//添加标签延伸出来的线，x座标为：leftx+min_w；宽度为：(width_to_take - width_final)
         var line2_ex_obj = document.createElement('div');
         line2_ex_obj.className = 'lines';
         line2_ex_obj.style.position = "absolute";
@@ -1650,14 +1662,14 @@ h_for_l1    |                   |  l3
         line2_ex_obj.style.height = 0 + "px";
         document.body.appendChild(line2_ex_obj);
     }
-    line2_obj.style.width = width_final + "px";
-    line2_obj.style.height = 25 + "px";
-    if(label!='') line2_obj.style.background = '#A9A9A9';
-    line2_obj.style.color = '#000';
-    line2_obj.style.zIndex = 999;
-    line2_obj.innerHTML = label;
+    line_label_obj.style.width = width_final + "px";
+    line_label_obj.style.height = 25 + "px";
+    if(label!='') line_label_obj.style.background = '#A9A9A9';
+    line_label_obj.style.color = '#000';
+    line_label_obj.style.zIndex = 998;
+    line_label_obj.innerHTML = label;
     
-    document.body.appendChild(line2_obj);
+    document.body.appendChild(line_label_obj);
     document.body.appendChild(line1_obj);
     document.body.appendChild(line3_obj);
     document.body.appendChild(arrow);
