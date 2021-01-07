@@ -2583,7 +2583,6 @@ $("#fileImport").click(function () {
             var size = selectedFile.size;//读取选中文件的大小
             var diction_file_flag = 0;
             if(name.indexOf('.dic')!==-1&&name[name.length-1]=='c') diction_file_flag=1
-            filename=name[name.length-1]=="t"? name:name.slice(0,name.length-5);//.txt
             var reader = new FileReader();//这是核心,读取操作就是由它完成.
             reader.readAsText(selectedFile);//读取文件的内容,也可以读取文件的URL
             reader.onload = function () {
@@ -2594,6 +2593,7 @@ $("#fileImport").click(function () {
                     myconsole(imported_flag,all_spos_loaded.length);//output
                     return;
                 }
+                filename=name[name.length-1]=="t"? name:name.slice(0,name.length-5);//.txt
                 document.getElementById('filename').innerHTML=name;
                 txts=this.result;
                 var samples=[];
@@ -2614,6 +2614,7 @@ $("#fileImport").click(function () {
                 if(contents[0].indexOf("\t")==-1)contents=coloumnlize(txts).split("\n");
 
                 mode=contents[0].trim().split("\t").length;//判断有多少列
+                var char_number = 0;
                 for(i in contents){
                     var row_tmp = contents[i].trim();
                     if(row_tmp.length==0&&contents[i]!=' '){//trim后的字符为空了，但是保留纯文本输入时其中的空格
@@ -2661,13 +2662,13 @@ $("#fileImport").click(function () {
                       else l=c_l[1];
 
 
-                  	if(((c=='_换行符_')&&(tmp.length>200))||((tmp.length>600&&('。；;!！'.indexOf(c)!=-1))
+                  	if(((c=='_换行符_')&&(tmp.length>200))||((tmp.length>800&&('。；;!！'.indexOf(c)!=-1))
                       )){
                             tmp.push(c);
                             label_tmp.push(l.trim());
                             samples.push(tmp);
                             all_spos_loaded.push(spo_lists_per_page);
-                            var page_index=parseInt(i)+1;
+                            var page_index=parseInt(char_number)+1;
                             spo_lists_per_page=[[page_index+'',page_index+'',page_index+'']];
                             labels.push(label_tmp);
                             if(tmp.length!=label_tmp.length){
@@ -2688,6 +2689,7 @@ $("#fileImport").click(function () {
                           return;
                         }
                   	}
+                    char_number += 1;
                   }
 
                   if(samples.indexOf(tmp)==-1&&tmp!=""&&tmp!="\n"){//追加剩下的，同时排除空和只有一个换行符的情况。

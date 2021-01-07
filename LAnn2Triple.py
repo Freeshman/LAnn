@@ -153,7 +153,7 @@ for txt in txts:
                         flag=True
                         break
 
-                    elif tokens_start>=k[0] and tokens_start<k[1] and tokens_end>=k[1]:#新token右边范围更大，重复部分左范围
+                    elif tokens_start>=k[0] and tokens_start<=k[1] and tokens_end>=k[1]:#新token右边范围更大，重复部分左范围
                         # print('='*40)
                         # print('新token右边范围更大，重复部分左范围') 
                         # print(tokens_start,tokens_end)
