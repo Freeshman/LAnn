@@ -1461,6 +1461,7 @@ function create_arrow(direction,color="#f00",left,top){//0-3:up down left right
         arrow.style.borderTop = '5px solid transparent';
         arrow.style.borderBottom = '5px solid transparent';    
     }
+    arrow.style.zIndex = 999;
     return arrow
 }
 function draw_line(pos1,pos2,h1 = 60,offset_h_step=1,h_char_obj = 0,top_y_used_list=[],label=''){
@@ -1572,10 +1573,10 @@ h_for_l1    |                   |  l3
         var h_for_l1 = low_y - pos1[1] - h_char_obj; //根据最低的y值和对象y值计算高度
         var h_for_l3 = low_y - pos2[1] - h_char_obj;
         if(situation.indexOf('e2_right')!=-1){
-            var arrow = create_arrow(3,color,pos2[0],pos2[1]+h_char_obj+h1-6);//right_arrow
+            var arrow = create_arrow(3,color,pos2[0],y_label - 6);//right_arrow
         }
         else if(situation.indexOf('e2_left')!=-1){
-            var arrow = create_arrow(2,color,pos2[0],pos2[1]+h_char_obj+h1-6);//left_arrow
+            var arrow = create_arrow(2,color,pos2[0],y_label - 6);//left_arrow
         }else if(situation.indexOf('E2OverE1')!=-1){
             var h_for_l1 = pos1[1] - low_y; //根据最低的y值和对象y值计算高度
             var h_for_l3 = low_y - pos2[1] - h_char_obj;
