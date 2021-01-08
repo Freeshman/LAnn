@@ -951,29 +951,22 @@ function previous(key_triger){
     document.activeElement.blur();
 }
 
-//屏蔽空格页面下滑
-document.body.onkeydown = function (event) {
-    var e = window.event || event;
-   if(e.keyCode == 32){
-          e.returnValue = false;
-      }
-}
-
-
-  //屏蔽ctl+g
-  document.onkeydown = function(ev){
+document.onkeydown = function(ev){
     var e = ev || event;
+    console.log(e.keyCode);
+    //屏蔽空格页面下滑
+    if(e.keyCode == 32){
+        e.returnValue = false;
+      }
+      //屏蔽ctl+g
     if (e.ctrlKey && e.keyCode==71){
       return false;
     }
-  }
- //屏蔽ctl+p
- document.onkeydown = function(ev){
-    var e = ev || event;
+    //屏蔽ctl+p
     if (e.ctrlKey && e.keyCode==80){
       return false;
     }
-  }
+}
 // function undo_last_delete(){
 //     if(back_chars!=undefined){
 
