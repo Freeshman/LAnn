@@ -456,9 +456,9 @@ function set_spos_from_server(spos){
         if(query_2dlist(all_spos_loaded[current_page_index],spo_global)==-1)        all_spos_loaded[current_page_index].push(spo_tmp);
     }
 }
-function seq_labing_to_server(seqlab_flag,sample){
+function seq_labing_to_server(seqlab_flag,sample,labels,add_delete){
     if(!seqlab_flag)return;
-    if(run_mode!='qt') seq_labing_to_server_django(seqlab_flag,sample);
+    if(run_mode!='qt') seq_labing_to_server_django(seqlab_flag,sample,add_delete);
     else{
         var data = {"sample":sample};
         data = JSON.stringify(data);
@@ -515,7 +515,7 @@ $("#seqlab_flag").change(function() {
       seqlab_flag=true;
       if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
         page_predicted.push(current_page_index);
-        seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index]);
+        seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],[],'query');
       }
       refresh();
       indicator('off');
@@ -698,6 +698,8 @@ function set_type(type_){
         myconsole(label_origin);//output
     }
     to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type,'add');
+    entity_diction[sample_x] = type;//立即添加词条，提高反应速度
+
     // to_server(true,sample_x,tokens_2_server,type);
 
     if(seq_lab_mode=='local'&&seqlab_flag){
@@ -829,7 +831,7 @@ function jump(vim){
     if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
     	//开启智能标注 未标注的页面 没有标注过三元组的
       page_predicted.push(current_page_index);
-      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index]);
+      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],[],'query');
     }
 
     document.getElementById('console').value="终端信息：";
@@ -899,9 +901,7 @@ function next(key_triger){
       return;
     }
     if(state!="modify_able")return;
-    back_chars = undefined;
-    back_labels = undefined;
-    back_spos = undefined;
+    seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],all_labels_loaded[current_page_index],'add');
     if(number_input!="") var page_change=eval(number_input);
     else var page_change=1;
     if((current_page_index+page_change)>total){//超出范围
@@ -914,23 +914,18 @@ function next(key_triger){
     number_record('clean');
     if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
       page_predicted.push(current_page_index);//记录当前被服务器预测过的页码
-      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index]);
+      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],[],'query');
     }
     document.getElementById('console').value="终端信息：";
     refresh();
     document.activeElement.blur();
 }
-// function change_page()
 function previous(key_triger){
     if(state=='choosing'){
       number_record('11');
       return;
     }
     if(state!="modify_able")return;
-    back_chars = undefined;
-    back_labels = undefined;
-    back_spos = undefined;
-
     if(number_input!="") var page_change=eval(number_input);
     else var page_change=1;
     if((current_page_index-page_change)<0){//超出范围
@@ -941,10 +936,11 @@ function previous(key_triger){
     cursor_index=all_samples_loaded[current_page_index].length-1;
 
     }
+//    myconsole('cursor_index='+cursor_index);//dev
     number_record('clean');
     if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
       page_predicted.push(current_page_index);
-      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index]);
+      seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],[],'query');
     }
     document.getElementById('console').value="终端信息：";
     refresh();
@@ -2726,7 +2722,7 @@ $("#fileImport").click(function () {
 
                   if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
                     page_predicted.push(current_page_index);
-                    seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index]);
+                    seq_labing_to_server(seqlab_flag,all_samples_loaded[current_page_index],[],'query');
                   }
                   
                     document.activeElement.blur();

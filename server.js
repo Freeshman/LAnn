@@ -46,7 +46,7 @@ function server_triple_relation_classfy_django(triple_relation_classfy_list,labe
         }
 })
 }
-function seq_labing_to_server_django(seqlab_flag,sample){
+function seq_labing_to_server_django(seqlab_flag,sample,add_delete){
 //  console.log(seqlab_flag,sample);//dev
   if(!seqlab_flag)return;
   $.ajax({
@@ -63,16 +63,17 @@ function seq_labing_to_server_django(seqlab_flag,sample){
         },
         error:function(xhr,state,errorThrown){
                 // requesFail(xhr);
-                // myconsole('传统方法进行标注！');
-                var sample_tmp = []
-
-                if(Object.keys(entity_diction).length>0){
-                  for(var i in sample){
-                    if(sample[i]=='_换行符_')sample_tmp.push('\n');
-                    else sample_tmp.push(sample[i]);
+                // myconsole('传统方法进行标注！',add_delete);//dev
+                if(add_delete=='query'){
+                  var sample_tmp = []
+                  if(Object.keys(entity_diction).length>0){
+                    for(var i in sample){
+                      if(sample[i]=='_换行符_')sample_tmp.push('\n');
+                      else sample_tmp.push(sample[i]);
+                    }
+                    sample_tmp = sample_tmp.join('');
+                    seq_label_local(sample_tmp,entity_diction);
                   }
-                  sample_tmp = sample_tmp.join('');
-                  seq_label_local(sample_tmp,entity_diction);
                 }
         			}
 })
@@ -111,8 +112,6 @@ function to_server_django(entity,sample,index_s,index_e,tokens,label,add_delete)
               type_choose(entity,{"预测值":label_predicted_local,"可信度":probability});
             }else if(add_delete=='delete'){
               if(sample in entity_diction) delete entity_diction[sample];
-            }else if(add_delete=='add'){
-              entity_diction[sample] = label;
             }
           }
 })
@@ -176,7 +175,7 @@ function relation_classfy_local(tp,relation_diction){
 }
 function seq_label_local(sample_tmp,entity_diction){
   for(var entity in entity_diction){
-    // myconsole('检查',entity);
+    // myconsole('检查',entity);//dev
     var start_p = -1;
     var n = 510;
     while(n>0){
@@ -184,7 +183,7 @@ function seq_label_local(sample_tmp,entity_diction){
       var target_p = sample_tmp.indexOf(entity,start_p+1);
       if(target_p==-1)break;
       else{
-        // myconsole('标注',entity,start_p,target_p,entity_diction[entity].indexOf('\r'));
+        // myconsole('标注',entity,start_p,target_p,entity_diction[entity],sample_tmp.slice(target_p,target_p+entity.length));
         set_type_tradition(entity,entity_diction[entity],[target_p,target_p+entity.length]);
         start_p = target_p;
       }
