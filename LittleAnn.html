@@ -586,6 +586,12 @@ function set_type_tradition(entity,label,start_end_in){
     for (var j = current_char_index_tmp+1; j<=end_char_index_tmp; j++) {
         all_labels_loaded[current_page_index][j]='I_'+type;
     }
+    if(all_labels_loaded[current_page_index][j][0]=='I'){
+        for (var i = j; i<all_labels_loaded[current_page_index].length; i++) {
+            if(all_labels_loaded[current_page_index][i][0]!='I')break;
+            all_labels_loaded[current_page_index][i]='O';
+        }
+    }
     if(type.indexOf('实体')!=-1) count_new_entity+=1;
 }
 function set_type(type_){
@@ -949,7 +955,6 @@ function previous(key_triger){
 
 document.onkeydown = function(ev){
     var e = ev || event;
-    console.log(e.keyCode);
     //屏蔽空格页面下滑
     if(e.keyCode == 32){
         e.returnValue = false;
