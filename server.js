@@ -63,7 +63,7 @@ function seq_labing_to_server_django(seqlab_flag,sample,add_delete){
         },
         error:function(xhr,state,errorThrown){
                 // requesFail(xhr);
-                // myconsole('传统方法进行标注！',add_delete);//dev
+                myconsole('传统方法进行标注！',add_delete);//dev
                 if(add_delete=='query'){
                   var sample_tmp = []
                   if(Object.keys(entity_diction).length>0){
@@ -174,8 +174,10 @@ function relation_classfy_local(tp,relation_diction){
   return [relation_label_local,probability];
 }
 function seq_label_local(sample_tmp,entity_diction){
-  for(var entity in entity_diction){
-    // myconsole('检查',entity);//dev
+  var list_tmp = Object.keys(entity_diction).sort(function(a,b){return b.length-a.length;});
+  for(var ee in list_tmp){
+    var entity = list_tmp[ee];
+    // console.log('检查',entity);//dev
     var start_p = -1;
     var n = 510;
     while(n>0){
@@ -183,8 +185,8 @@ function seq_label_local(sample_tmp,entity_diction){
       var target_p = sample_tmp.indexOf(entity,start_p+1);
       if(target_p==-1)break;
       else{
-        // myconsole('标注',entity,start_p,target_p,entity_diction[entity],sample_tmp.slice(target_p,target_p+entity.length));
-        set_type_tradition(entity,entity_diction[entity],[target_p,target_p+entity.length]);
+        // myconsole('标注',entity,start_p,target_p,entity_diction[entity],sample_tmp.slice(target_p,target_p+entity.length),entity.length);
+        set_type_tradition(entity,entity_diction[entity],[target_p,target_p+entity.length-1]);
         start_p = target_p;
       }
     }

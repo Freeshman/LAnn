@@ -511,6 +511,7 @@ $("#cut_save_flag").change(function() {
     document.activeElement.blur();
 });
 $("#seqlab_flag").change(function() {
+    if(imported_flag==0){document.getElementById('seqlab_flag').checked=false;return;}
     if(document.getElementById('seqlab_flag').checked){
       seqlab_flag=true;
       if(seqlab_flag&&page_predicted.indexOf(current_page_index)==-1&&all_spos_loaded[current_page_index].length<=1){
@@ -697,7 +698,9 @@ function set_type(type_){
     // if(type!=""&type_given_server!='服务器不可用'&(type!=type_given_server)||(type!=label_origin)){
     // if(type!=""&type_given_server!='服务器不可用'){
         // to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,type_given_server,'delete');
-    if(label_origin.length!=0)  {
+    // if(label_origin.length!=0)  {
+        if(label_origin.length!=0&&label_origin!=type_given_server)  {
+
         to_server(true,sample_x,tokesn_2_server_index_s,tokesn_2_server_index_s+sample_x.length, tokens_2_server,label_origin,'delete');
         myconsole('删除原有标签的');//output
         myconsole(sample_x);//output
@@ -2421,7 +2424,9 @@ document.documentElement.addEventListener('mouseup', function (event) {
     obj_mouseup = event.target.tagName=="SPAN"?event.target:obj_mouseup;
     start_end=[lists.indexOf(obj_mousedown),lists.indexOf(obj_mouseup)];//鼠标选中文本释放后，立即更新start_end全局变量
     change_cursor_index(start_end[0]);
-    if(all_labels_loaded[current_page_index][start_end[0]]!='O')return;
+    // if(all_labels_loaded[current_page_index][start_end[0]]!='O')return;//开头不为O标签，不跳出实体类型选择框
+    if(all_labels_loaded[current_page_index][start_end[1]]!='O'&&all_labels_loaded[current_page_index][start_end[0]]!='O')return;
+    //开头和末尾都同时不为O标签
     add_entity();
 })
 document.documentElement.addEventListener('click', function (event) {
@@ -2570,8 +2575,8 @@ $("#fileImport").click(function () {
             var selectedFile = document.getElementById('files').files[0];
             imported_flag=0;
             myconsole_clear();//output
-            if(selectedFile==undefined){//没有选择文件，使用已经加载的文件
-                imported_flag = 1;
+            if(selectedFile==undefined){//没有选择文件
+                if(all_samples_loaded.length!=0)imported_flag = 1;//已经加载文件  
                 return;
             }
             var name = selectedFile.name;//读取选中文件的文件名
