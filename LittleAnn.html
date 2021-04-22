@@ -7,6 +7,9 @@
     <script src="FileSaver.js"></script>
     <script src="mousetrap.min.js"></script>
     <script src="server.js"></script>
+    <script src="keybind.js"></script>
+    <script src="entity_type.js" ></script>
+    <script src="relation_type.js" ></script>
     <script type="text/javascript" src="qwebchannel.js"></script>
 </head>
 <style>
@@ -252,10 +255,6 @@ input,button{
     </div>
     <div id="entity_type" class="white_content">
       <p id="given_by_server_e"></p>
-      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_地理位置')">0:实体_地理位置</button></li>
-      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_日期时间')">1:实体_日期时间</button></li>
-      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_人名')">2:实体_人名</button></li>
-      <li><button style="background:#4682B4;float: left;padding: 0.5em" onclick="set_type('实体_公司名')">3:实体_公司名</button></li>
       <li><button style="background:#4581B3;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
       <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="type_choose_close()">n:取消</button></li>
       <!-- <a href="javascript:void(0)" onclick="type_choose_close()">取消</a> -->
@@ -263,10 +262,6 @@ input,button{
     <div id="relation_type" class="white_content">
       <p id="given_by_server_r"></p>
       <ul>
-        <li><button style="background:#228B22;float: left;padding: 0.5em" onclick="set_type('关系_所属公司')">0:关系_所属公司</button></li>
-        <li><button style="background:#228B22;float: left;padding: 0.5em" onclick="set_type('关系_成立时间')">1:关系_成立时间</button></li>
-        <li><button style="background:#228B22;float: left;padding: 0.5em" onclick="set_type('关系_位于')">2:关系_位于</button></li>
-        <li><button style="background:#228B22;float: left;padding: 0.5em" onclick="set_type('关系_聘用')">3:关系_聘用</button></li>
         <li><button style="background:#218a21;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
         <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="spo_global=[];type_choose_close()">n:取消</button></li>
       </ul>
@@ -308,7 +303,7 @@ input,button{
     var sp_lock=[];
     var page_predicted=[];
     var spo_label_a_obj_list_per_page = [];
-    var start_end;
+    var start_end = [0,0];
     var obj_mousedown;
     var obj_mouseup;
     var filename="";
@@ -353,47 +348,20 @@ input,button{
     var triple_relation_classfy_list=[];
     var tokens_2_server="";
     var tokesn_2_server_index_s=-1;
-function keyboard_bind(){
-     Mousetrap.bind('s', function() { add_entity(); });
-     // Mousetrap.bind('f', function() { add_relation(); });
-     Mousetrap.bind('f', function() {number_record('15'); });
-     Mousetrap.bind('a', function() { cancle(); });
-     Mousetrap.bind('h', function() { cursor_left(); });
-     Mousetrap.bind('g', function() { cursor_left_twice(); });
-     Mousetrap.bind('i', function() { number_record('18');  });
-     Mousetrap.bind('l', function() { cursor_right(); });
-     Mousetrap.bind(';', function() { cursor_right_twice(); });
-     Mousetrap.bind('j', function() { cursor_down(); });
-     Mousetrap.bind('k', function() { cursor_up(); });
-     Mousetrap.bind('n', function() { next(true); });
-     Mousetrap.bind('b', function() { previous(true); });
-     Mousetrap.bind('c', function() { number_record('12'); });
-     Mousetrap.bind('d', function() { number_record('0'); });
-     Mousetrap.bind('e', function() { forward(); });
-     Mousetrap.bind('r', function() { forward_end(); });
-     Mousetrap.bind('g', function() { number_record('3'); });
-     Mousetrap.bind('w', function() { back(); });
-     Mousetrap.bind('0', function() { number_record('0'); });
-     Mousetrap.bind('1', function() { number_record('1'); });
-     Mousetrap.bind('2', function() { number_record('2'); });
-     Mousetrap.bind('3', function() { number_record('3'); });
-     Mousetrap.bind('4', function() { number_record('4'); });
-     Mousetrap.bind('5', function() { number_record('5'); });
-     Mousetrap.bind('6', function() { number_record('6'); });
-     Mousetrap.bind('7', function() { number_record('7'); });
-     Mousetrap.bind('8', function() { number_record('8'); });
-     Mousetrap.bind('9', function() { number_record('9'); });
-     Mousetrap.bind('p', function() { keyboard_spo(); });
-     Mousetrap.bind('u', function() { insert_char(); });
-     Mousetrap.bind('enter', function() { jump(true); });
-     Mousetrap.bind('esc', function() { number_record('clean'); });
-     Mousetrap.bind('ctrl+g', function(){ jump_2_char_total_index();});
-     Mousetrap.bind('ctrl+p', function(){ debug();});
-     Mousetrap.bind('x', function(){ delete_char();});
-     Mousetrap.bind('v', function() { selecte(); });
-     Mousetrap.bind('space', function() { selecte(); });
-     Mousetrap.bind('backspace', function() { backspace(); });    
-}
+	for(var c in config_entity){
+        var tamplate = "<li><button style=\"background: "+config_entity[c] +";float: left;padding: 0.5em\" onclick=\"set_type('实体_"+c+"')\">"+number_map[(Object.keys(config_entity).length-count_tmp-1)]+":"+c+"</button></li>";
+        var obj =    document.getElementById("entity_type_config");
+        obj.innerHTML = tamplate+obj.innerHTML;
+        count_tmp++;
+    }
+    count_tmp = 0;
+    for(var c in config_relation){
+        var tamplate = "<li><button style=\"background: "+config_relation[c] +";float: left;padding: 0.5em\" onclick=\"set_type('关系_"+c+"')\">"+number_map[(Object.keys(config_relation).length-count_tmp-1)]+":"+c+"</button></li>";
+        // console.log(tamplate);
+        var obj =    document.getElementById("relation_type_config");
+        obj.innerHTML = tamplate+obj.innerHTML;
+        count_tmp++;
+    }
 window.onresize = function(){
     adjust_position();
     refresh();
@@ -1420,7 +1388,7 @@ function outline_triple(current_char_index){
             }
             while(pos_x_drawed.indexOf(pos[2])!=-1) pos[2]+=10;//x
             while(pos_x_drawed.indexOf(pos[0])!=-1) pos[0]+=10;//x
-            top_y_used_list.push(draw_line([pos[0],pos[1]],[pos[2],pos[3]], 60 ,offset_h_step,geo.height,top_y_used_list,spo_tmp[3]+':'+spo_tmp[1]));
+            top_y_used_list.push(draw_line([pos[0],pos[1]],[pos[2],pos[3]], 60 ,offset_h_step,geo.height,top_y_used_list,spo_tmp[3]+':'+spo_tmp[1],config_relation[spo_tmp[1]]));
             pos_x_drawed.push(pos[2]);
             pos_x_drawed.push(pos[0]);
         }
@@ -1461,7 +1429,7 @@ function create_arrow(direction,color="#f00",left,top){//0-3:up down left right
     arrow.style.zIndex = 999;
     return arrow
 }
-function draw_line(pos1,pos2,h1 = 60,offset_h_step=1,h_char_obj = 0,top_y_used_list=[],label=''){
+function draw_line(pos1,pos2,h1 = 60,offset_h_step=1,h_char_obj = 0,top_y_used_list=[],label='',color = ''){
     /*
      * pos1,pos1: pos1 direct to pos2
      * h1: default distance between label and char
@@ -1493,9 +1461,10 @@ h_for_l1    |                   |  l3
     line_label_obj.className = 'lines';
     line3_obj.className = 'lines';
 
-    var color = '#d';
-    var str = "0123456789abcdef";
-    for(var i=0;i<2;i++) color+=str.charAt(Math.ceil(Math.random()*(str.length-1)));
+    if(color==""){//未指定要显示的颜色，随即选择
+        var str = "0123456789abcdef";
+        for(var i=0;i<2;i++) color+=str.charAt(Math.ceil(Math.random()*(str.length-1)));
+    }
     // myconsole(color);//dev
     var h_for_l1 = 1;
     var h_for_l3 = 1;
@@ -1860,7 +1829,7 @@ function text2obj_color(){
 
         //实体可视化
         if(label[c].length>2){
-            if(label[c][2]=="实") char.style.backgroundColor="#4682B4";
+            if(label[c][2]=="实") char.style.backgroundColor=config_entity[label[c].slice(5)];
             // else if(label[c][2]=="关") char.style.backgroundColor="#228B22";
             if(label[c][0]=="B"){
               label_last=label[c].slice(2);
