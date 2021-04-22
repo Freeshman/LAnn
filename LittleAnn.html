@@ -255,13 +255,14 @@ input,button{
     </div>
     <div id="entity_type" class="white_content">
       <p id="given_by_server_e"></p>
+      <ul id="entity_type_config">
       <li><button style="background:#4581B3;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
       <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="type_choose_close()">n:取消</button></li>
-      <!-- <a href="javascript:void(0)" onclick="type_choose_close()">取消</a> -->
+    </ul>
     </div>
     <div id="relation_type" class="white_content">
       <p id="given_by_server_r"></p>
-      <ul>
+      <ul id="relation_type_config">
         <li><button style="background:#218a21;float: left;padding: 0.5em" onclick="selecte()">空格:默认</button></li>
         <li><button style="background:#FF00FF;float: left;padding: 0.5em" onclick="spo_global=[];type_choose_close()">n:取消</button></li>
       </ul>
@@ -348,6 +349,7 @@ input,button{
     var triple_relation_classfy_list=[];
     var tokens_2_server="";
     var tokesn_2_server_index_s=-1;
+    var count_tmp = 0;
 	for(var c in config_entity){
         var tamplate = "<li><button style=\"background: "+config_entity[c] +";float: left;padding: 0.5em\" onclick=\"set_type('实体_"+c+"')\">"+number_map[(Object.keys(config_entity).length-count_tmp-1)]+":"+c+"</button></li>";
         var obj =    document.getElementById("entity_type_config");
