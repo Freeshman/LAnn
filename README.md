@@ -9,11 +9,13 @@ LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注
 可以先后导入test.txt、entity_dict，然后启动软件的辅助标注试一试，[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体类型
-![实体类型](https://github.com/Freeshman/LAnn/blob/master/entity_relation_class_config.png)
+在entity_type.js文件中配置实体类型和所显示的颜色，配置格式为："实体名称":"颜色"。目前最多支持26种实体类型的定义，选择快捷键分别对应与[0-9,a-z]
+### 配置关系类型
+在relation_type.js文件中配置关系类型和所显示的颜色，配置格式为："关系名称":"颜色"。目前最多支持26种关系类型的定义，选择快捷键分别对应与[0-9,a-z]
 ### 配置按键映射（如需要）
-![实体关系类型](https://github.com/Freeshman/LAnn/blob/master/key_config.png)
+在keybind.js文件中配置按键。
 ### 配置辅助标注模型
-![实体关系类型](https://github.com/Freeshman/LAnn/blob/master/model_config.png)
+
 ## LAnn读取文件
 标注工具可以直接读取：
 - 原始文本
@@ -91,10 +93,11 @@ LAnn2Triple.py文件用于将标注过的.lann文件转换为三元组数据集�
 ## TODO
 
 - [x] 三元组的编辑
-- [-] 整合分词（统一字符形式）
+- [ ] 多元组标注功能
+- [-] 整合分词（统一为字符形式）
 - [x] 智能算法辅助标注
-- [ ] BERT预训练模型在线训练
+- [ ] BERT预训练模型在线训练（正在试验，效果差强人意）
 - [-] 翻译为英文版（貌似没这个必要）
 - [x] 添加VIM模式
-- [ ] 更优美的三元组显示方式
+- [x] 更优美的三元组显示方式
 - [ ] 加入语料标注质量分析、提升功能
