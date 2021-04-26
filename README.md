@@ -5,7 +5,7 @@
 - 计划加入预训练BERT模型。
 ## LAnn简介
 ![演示视频](https://github.com/Freeshman/LAnn/blob/master/example.gif)
-LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注工具。具有使用简单的特点，采用网页的形式，使用浏览器便可运行。标注过程、结果直观，易后处理。基本不用配置，快速上手。可只用于NER标注，也可以适当修改，改为POS标注或者分词标注。
+LAnn（Little Annotator）是一个用于标注三元组的纯前段中文标注工具。具有使用简单的特点，采用网页的形式，使用浏览器便可运行。标注过程、结果直观，易后处理。基本不用配置，快速上手。可只用于NER标注，也可以适当修改，改为POS标注（实体类型改为词性，只进行实体标注）或者分词标注（设置特殊的实体类型“词语”，只进行实体标注）。
 可以先后导入test.txt、entity_dict，然后启动软件的辅助标注试一试，[试一试](https://freeshman.github.io/LAnn/LittleAnn.html)
 ## 快速上手
 ### 配置实体类型
