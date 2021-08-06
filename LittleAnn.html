@@ -2012,24 +2012,28 @@ function save(){
     var labels_result=[];
     var tokens_result=[];
     var spo_result=[];
-
+    var count = 0;
     //实体和关系
     for (var i = 0; i <all_labels_loaded.length; i++) {
         for (var j = 0; j<all_labels_loaded[i].length; j++) {
             var l=all_labels_loaded[i][j];
             var t=all_samples_loaded[i][j]=="\n"? "_换行符_":all_samples_loaded[i][j];
             if(l==undefined){
-                alert('l发现问题'+l);
-                return;
+                alert('标签l发现未定义：'+l+'\n需要人工检查标注文件'+count+'行处');
+		myconsole('标签l发现未定义：'+l+'\n需要人工检查标注文件'+count+'行处');
+//                 return;
             }
             if(t==undefined||t.length==0){
-                alert('t发现问题'+t);
-                return;
+                alert('标签t发现异常：'+t+'\n需要人工检查标注文件'+count+'行处');
+	        myconsole('标签t发现异常：'+t+'\n需要人工检查标注文件'+count+'行处');
+//                 return;
             }
             labels_result.push(l);
             tokens_result.push(t);
 
             spo_result.push("X");//初始化三元组域，全部用“X”
+		
+		count = count + 1;
         }
 
     }
@@ -2056,11 +2060,11 @@ function save(){
         var t=tokens_result[i];
         var l=labels_result[i];
         if(l==undefined){
-            alert('汇总时，l发现问题 '+l+'，已修改为F，请在'+i+'处手动修改\n或保存自动备份的');
+            alert('汇总时，标签l发现问题 '+l+'，已修改为F，请在'+i+'处手动修改');
             l='F';
         }
         if(t==undefined||t.length==0){
-            alert('汇总时，t发现问题'+t+'，已修改为?，请在'+i+'处手动修改\nt='+t+' t.length='+t.length);
+            alert('汇总时，字符t发现问题'+t+'，已修改为?，请在'+i+'处手动修改\nt='+t+' t.length='+t.length);
             t='?';
             }
         results.push(t+"\t"+l+"\t"+spo_result[i]);
